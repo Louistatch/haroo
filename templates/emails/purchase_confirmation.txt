@@ -1,0 +1,43 @@
+HAROO
+Plateforme Agricole Intelligente du Togo
+Confirmation d'achat
+
+Bonjour {{ user.first_name }} {{ user.last_name }},
+
+Merci pour votre achat ! Nous sommes ravis de vous confirmer que votre commande a été traitée avec succès.
+
+=== DÉTAILS DE VOTRE ACHAT ===
+
+Document: {{ document.titre }}
+Culture: {{ document.culture }}
+Format: {{ achat.format_fichier }}
+Prix payé: {{ document.prix|floatformat:0 }} FCFA
+Date d'achat: {{ achat.created_at|date:"d/m/Y à H:i" }}
+
+=== IMPORTANT ===
+
+⏰ Votre lien de téléchargement est valide pendant 48 heures.
+Date d'expiration : {{ expiration_date|date:"d/m/Y à H:i" }}
+
+=== TÉLÉCHARGER VOTRE DOCUMENT ===
+
+Cliquez sur le lien ci-dessous pour télécharger votre document :
+{{ download_url }}
+
+Vous pouvez également accéder à votre document depuis votre historique d'achats :
+{{ purchase_history_url }}
+
+=== BESOIN D'AIDE ? ===
+
+Si vous rencontrez des difficultés pour télécharger votre document, n'hésitez pas à nous contacter.
+
+Cordialement,
+L'équipe Haroo
+
+---
+Haroo - Plateforme Agricole Intelligente du Togo
+Lomé, Togo
+{{ frontend_url }}
+
+Vous recevez cet email car vous avez effectué un achat sur notre plateforme.
+© 2024 Haroo. Tous droits réservés.

@@ -8,6 +8,8 @@ import Home from "./pages/Home";
 import Dashboard from "./pages/Dashboard";
 import Documents from "./pages/Documents";
 import Agronomists from "./pages/Agronomists";
+import PurchaseHistory from "./pages/PurchaseHistory";
+import PaymentSuccess from "./pages/PaymentSuccess";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Header from "./components/Header";
 
@@ -27,6 +29,8 @@ export default function App() {
         <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
         <Route path="/documents" element={<Documents />} />
         <Route path="/agronomists" element={<Agronomists />} />
+        <Route path="/purchases" element={<ProtectedRoute><PurchaseHistory /></ProtectedRoute>} />
+        <Route path="/payment/success" element={<PaymentSuccess />} />
         <Route path="/me" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

@@ -1,0 +1,84 @@
+{% extends "emails/base_email.html" %}
+
+{% block title %}Nouveau lien de téléchargement - {{ document.titre }}{% endblock %}
+
+{% block content %}
+<p class="greeting">Bonjour {{ user.first_name }} {{ user.last_name }},</p>
+
+<p class="message">
+    Votre lien de téléchargement a été <strong>régénéré avec succès</strong> ! Vous pouvez maintenant télécharger votre document.
+</p>
+
+<div class="info-box" style="background-color: #e8f5e9; border-left-color: #4caf50;">
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+        <tr>
+            <td style="vertical-align: top; width: 40px;">
+                <span style="font-size: 32px;">✅</span>
+            </td>
+            <td>
+                <h2 style="margin: 0 0 10px 0; color: #2e7d32; font-size: 18px;">Nouveau lien disponible</h2>
+                <p style="margin: 0; font-size: 14px; color: #555555;">
+                    Ce nouveau lien est valide pendant <strong>48 heures</strong>.<br>
+                    Date d'expiration : <strong>{{ expiration_date|date:"d/m/Y à H:i" }}</strong>
+                </p>
+            </td>
+        </tr>
+    </table>
+</div>
+
+<div class="info-box">
+    <h2 class="info-box-title">📄 Détails du document</h2>
+    
+    <div class="info-row">
+        <span class="info-label">Document</span>
+        <span class="info-value">{{ document.titre }}</span>
+    </div>
+    
+    <div class="info-row">
+        <span class="info-label">Culture</span>
+        <span class="info-value">{{ document.culture }}</span>
+    </div>
+    
+    <div class="info-row">
+        <span class="info-label">Format</span>
+        <span class="info-value">{{ achat.format_fichier }}</span>
+    </div>
+    
+    <div class="info-row">
+        <span class="info-label">Date d'achat initiale</span>
+        <span class="info-value">{{ achat.created_at|date:"d/m/Y" }}</span>
+    </div>
+</div>
+
+<div class="button-container">
+    <a href="{{ download_url }}" class="button">📥 Télécharger maintenant</a>
+</div>
+
+<p class="message" style="text-align: center; font-size: 14px; color: #666666;">
+    Vous pouvez également accéder à votre document depuis votre historique d'achats
+</p>
+
+<div class="button-container">
+    <a href="{{ purchase_history_url }}" class="button-secondary">📋 Voir mes achats</a>
+</div>
+
+<div class="warning-box">
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+        <tr>
+            <td style="vertical-align: top; width: 40px;">
+                <span class="warning-icon">💡</span>
+            </td>
+            <td>
+                <p class="warning-text" style="margin: 0;">
+                    <strong>Rappel :</strong> N'oubliez pas de télécharger votre document avant l'expiration du lien. Vous pourrez régénérer le lien autant de fois que nécessaire.
+                </p>
+            </td>
+        </tr>
+    </table>
+</div>
+
+<p class="message" style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0;">
+    Cordialement,<br>
+    <strong>L'équipe Haroo</strong>
+</p>
+{% endblock %}

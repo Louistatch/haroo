@@ -1,0 +1,45 @@
+HAROO
+Plateforme Agricole Intelligente du Togo
+Nouveau lien de téléchargement
+
+Bonjour {{ user.first_name }} {{ user.last_name }},
+
+Votre lien de téléchargement a été régénéré avec succès !
+
+=== NOUVEAU LIEN DISPONIBLE ===
+
+Vous pouvez maintenant télécharger votre document "{{ document.titre }}" en utilisant le nouveau lien ci-dessous.
+
+⏰ Ce nouveau lien est valide pendant 48 heures.
+Date d'expiration : {{ expiration_date|date:"d/m/Y à H:i" }}
+
+=== DÉTAILS DU DOCUMENT ===
+
+Document: {{ document.titre }}
+Culture: {{ document.culture }}
+Format: {{ achat.format_fichier }}
+Date d'achat initiale: {{ achat.created_at|date:"d/m/Y" }}
+
+=== TÉLÉCHARGER VOTRE DOCUMENT ===
+
+Cliquez sur le lien ci-dessous pour télécharger votre document :
+{{ download_url }}
+
+Vous pouvez également accéder à votre document depuis votre historique d'achats :
+{{ purchase_history_url }}
+
+=== RAPPEL IMPORTANT ===
+
+N'oubliez pas de télécharger votre document avant l'expiration du lien.
+Vous pourrez régénérer le lien autant de fois que nécessaire.
+
+Cordialement,
+L'équipe Haroo
+
+---
+Haroo - Plateforme Agricole Intelligente du Togo
+Lomé, Togo
+{{ frontend_url }}
+
+Vous recevez cet email car vous avez effectué un achat sur notre plateforme.
+© 2024 Haroo. Tous droits réservés.

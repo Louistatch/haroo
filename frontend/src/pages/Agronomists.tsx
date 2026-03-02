@@ -87,7 +87,7 @@ export default function Agronomists() {
     <div className="agronomists-page">
       <div className="agronomists-hero">
         <div className="hero-content">
-          <h1>👨‍🌾 Annuaire des Agronomes Validés</h1>
+          <h1>👨‍<img src="/images/cultures/mais.jpg" alt="Culture" className="inline-icon" style={{width: 24, height: 24, borderRadius: "50%", objectFit: "cover", marginRight: 8}} /> Annuaire des Agronomes Validés</h1>
           <p>Trouvez des experts agricoles qualifiés près de chez vous</p>
         </div>
       </div>
@@ -159,7 +159,7 @@ export default function Agronomists() {
               <div key={agro.id} className="agronomist-card">
                 <div className="card-header">
                   <div className="avatar">
-                    <span className="avatar-icon">👨‍🌾</span>
+                    <span className="avatar-icon">👨‍<img src="/images/cultures/mais.jpg" alt="Culture" className="inline-icon" style={{width: 24, height: 24, borderRadius: "50%", objectFit: "cover", marginRight: 8}} /></span>
                   </div>
                   {agro.badge_valide && (
                     <span className="badge-verified">✓ Validé</span>
@@ -206,7 +206,7 @@ export default function Agronomists() {
             <button className="modal-close" onClick={() => setSelectedAgronomist(null)}>×</button>
             
             <div className="modal-header">
-              <div className="avatar-large">👨‍🌾</div>
+              <div className="avatar-large">👨‍<img src="/images/cultures/mais.jpg" alt="Culture" className="inline-icon" style={{width: 24, height: 24, borderRadius: "50%", objectFit: "cover", marginRight: 8}} /></div>
               <h2>{selectedAgronomist.user.first_name} {selectedAgronomist.user.last_name}</h2>
               {selectedAgronomist.badge_valide && (
                 <span className="badge-verified">✓ Agronome Validé</span>

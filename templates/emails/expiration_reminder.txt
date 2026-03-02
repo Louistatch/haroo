@@ -1,0 +1,40 @@
+HAROO
+Plateforme Agricole Intelligente du Togo
+Rappel : Votre lien de téléchargement expire bientôt
+
+Bonjour {{ user.first_name }} {{ user.last_name }},
+
+Nous vous rappelons que votre lien de téléchargement pour le document "{{ document.titre }}" expire bientôt.
+
+=== TEMPS RESTANT ===
+
+⏰ Il vous reste {{ hours_remaining }} heure(s) pour télécharger votre document.
+Date d'expiration : {{ expiration_date|date:"d/m/Y à H:i" }}
+
+=== DÉTAILS DU DOCUMENT ===
+
+Document: {{ document.titre }}
+Culture: {{ document.culture }}
+Format: {{ achat.format_fichier }}
+Date d'achat: {{ achat.created_at|date:"d/m/Y" }}
+
+=== ACTION REQUISE ===
+
+Pour télécharger votre document avant l'expiration du lien, accédez à votre historique d'achats :
+{{ purchase_history_url }}
+
+=== APRÈS L'EXPIRATION ===
+
+Si votre lien expire, vous pourrez le régénérer gratuitement depuis votre historique d'achats.
+Le nouveau lien sera valide pendant 48 heures supplémentaires.
+
+Cordialement,
+L'équipe Haroo
+
+---
+Haroo - Plateforme Agricole Intelligente du Togo
+Lomé, Togo
+{{ frontend_url }}
+
+Vous recevez cet email car vous avez effectué un achat sur notre plateforme.
+© 2024 Haroo. Tous droits réservés.

@@ -246,3 +246,288 @@ select {
     display: none !important;
   }
 }
+
+
+/* ===================================
+   TOAST NOTIFICATIONS
+   =================================== */
+
+.toast-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: var(--z-tooltip);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  max-width: 400px;
+  pointer-events: none;
+}
+
+.toast {
+  background: var(--card);
+  padding: var(--spacing-md) var(--spacing-lg);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xl);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  animation: slideIn 0.3s ease-out;
+  border-left: 4px solid;
+  pointer-events: auto;
+  min-width: 300px;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(400px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.toast.success {
+  border-left-color: var(--success);
+  background: linear-gradient(to right, rgba(76, 175, 80, 0.1), var(--card));
+}
+
+.toast.error {
+  border-left-color: var(--error);
+  background: linear-gradient(to right, rgba(244, 67, 54, 0.1), var(--card));
+}
+
+.toast.warning {
+  border-left-color: var(--warning);
+  background: linear-gradient(to right, rgba(255, 152, 0, 0.1), var(--card));
+}
+
+.toast.info {
+  border-left-color: var(--info);
+  background: linear-gradient(to right, rgba(33, 150, 243, 0.1), var(--card));
+}
+
+.toast-icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.toast-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.toast-title {
+  font-weight: var(--font-weight-semibold);
+  margin-bottom: var(--spacing-xs);
+  color: var(--text);
+  font-size: var(--font-size-base);
+}
+
+.toast-message {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.toast-close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: var(--text-muted);
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.toast-close:hover {
+  background: var(--bg-secondary);
+  color: var(--text);
+}
+
+/* Responsive Toast */
+@media (max-width: 768px) {
+  .toast-container {
+    left: var(--spacing-md);
+    right: var(--spacing-md);
+    max-width: none;
+  }
+
+  .toast {
+    min-width: auto;
+  }
+}
+
+
+/* ===================================
+   ICÔNES - Remplacement des Émojis
+   =================================== */
+
+/* Icônes inline - Remplacent les émojis dans le texte */
+.inline-icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  object-fit: cover;
+  vertical-align: middle;
+  margin-right: 8px;
+  display: inline-block;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease;
+}
+
+.inline-icon:hover {
+  transform: scale(1.1);
+}
+
+/* Icônes de service (grandes) - Pour les sections hero */
+.service-icon-img {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-bottom: 1rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.service-icon-img:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 16px rgba(46, 125, 50, 0.25);
+}
+
+/* Icônes de feature (moyennes) - Pour les cartes */
+.feature-icon-img {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease;
+}
+
+.feature-icon-img:hover {
+  transform: scale(1.1);
+}
+
+/* Icônes de détail (petites) - Pour les listes */
+.detail-icon-img {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-right: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Avatar agronome - Photos de profil */
+.agronomist-avatar {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid var(--primary);
+  box-shadow: 0 4px 12px rgba(46, 125, 50, 0.2);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.agronomist-avatar:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 16px rgba(46, 125, 50, 0.3);
+}
+
+/* Logo dans header */
+.logo-img {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease;
+}
+
+.logo-img:hover {
+  transform: rotate(5deg) scale(1.05);
+}
+
+/* Icônes dans les boutons */
+.btn-icon {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-right: 8px;
+  vertical-align: middle;
+}
+
+/* Icônes de statut */
+.status-icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.status-icon.success {
+  border: 2px solid var(--success);
+}
+
+.status-icon.error {
+  border: 2px solid var(--error);
+}
+
+.status-icon.warning {
+  border: 2px solid var(--warning);
+}
+
+/* Responsive - Ajuster les tailles sur mobile */
+@media (max-width: 768px) {
+  .service-icon-img {
+    width: 60px;
+    height: 60px;
+  }
+  
+  .feature-icon-img {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .agronomist-avatar {
+    width: 80px;
+    height: 80px;
+  }
+  
+  .inline-icon {
+    width: 20px;
+    height: 20px;
+  }
+}
+
+/* Animation de chargement pour les images */
+@keyframes shimmer {
+  0% {
+    background-position: -200px 0;
+  }
+  100% {
+    background-position: 200px 0;
+  }
+}
+
+.inline-icon[src=""],
+.service-icon-img[src=""],
+.feature-icon-img[src=""] {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200px 100%;
+  animation: shimmer 1.5s infinite;
+}

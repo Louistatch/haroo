@@ -79,9 +79,9 @@ export default function Home() {
 
           {/* Carte Annuaire des Agronomes */}
           {(user.user_type === 'EXPLOITANT' || user.user_type === 'ACHETEUR') && (
-            <div className="feature-card" onClick={() => alert('Annuaire des agronomes - À venir')}>
+            <div className="feature-card" onClick={() => navigate('/agronomists')}>
               <div className="feature-icon" style={{ background: '#4caf50' }}>
-                🌾
+                <img src="/images/cultures/mais.jpg" alt="Culture" className="inline-icon" style={{width: 24, height: 24, borderRadius: "50%", objectFit: "cover", marginRight: 8}} />
               </div>
               <h3>Annuaire des Agronomes</h3>
               <p>Trouver et recruter des agronomes qualifiés dans votre région</p>
@@ -89,9 +89,9 @@ export default function Home() {
           )}
 
           {/* Carte Documents Techniques */}
-          <div className="feature-card" onClick={() => alert('Documents techniques - À venir')}>
+          <div className="feature-card" onClick={() => navigate('/documents')}>
             <div className="feature-icon" style={{ background: '#ff9800' }}>
-              📄
+              <img src="/images/placeholder/document-default.jpg" alt="Document" className="inline-icon" style={{width: 24, height: 24, borderRadius: "50%", objectFit: "cover", marginRight: 8}} />
             </div>
             <h3>Documents Techniques</h3>
             <p>Accéder aux comptes d'exploitation et itinéraires techniques</p>
@@ -123,7 +123,7 @@ export default function Home() {
           {user.user_type === 'EXPLOITANT' && (
             <div className="feature-card" onClick={() => alert('Préventes - À venir')}>
               <div className="feature-icon" style={{ background: '#00bcd4' }}>
-                📊
+                <img src="/images/hero/agriculture.jpg" alt="Statistiques" className="inline-icon" style={{width: 24, height: 24, borderRadius: "50%", objectFit: "cover", marginRight: 8}} />
               </div>
               <h3>Préventes Agricoles</h3>
               <p>Créer et gérer vos préventes de production</p>
@@ -150,7 +150,7 @@ export default function Home() {
               <div className="stat-value">0</div>
               <div className="stat-label">Missions actives</div>
             </div>
-            <div className="stat-box">
+            <div className="stat-box" onClick={() => navigate('/purchases')} style={{ cursor: 'pointer' }}>
               <div className="stat-value">0</div>
               <div className="stat-label">Documents achetés</div>
             </div>
@@ -181,7 +181,7 @@ export default function Home() {
             alignItems: 'center',
             gap: '1rem'
           }}>
-            <span style={{ fontSize: '1.5rem' }}>⚠️</span>
+            <span style={{ fontSize: '1.5rem' }}><img src="/images/hero/market.jpg" alt="Attention" className="inline-icon" style={{width: 20, height: 20, borderRadius: "50%", objectFit: "cover", marginRight: 8}} /></span>
             <div>
               <strong>Vérification requise</strong>
               <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.9rem' }}>

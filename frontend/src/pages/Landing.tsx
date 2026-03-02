@@ -89,7 +89,7 @@ export default function Landing() {
           }}>
             {/* Service 1: Documents */}
             <div className="service-card">
-              <div className="service-icon">📄</div>
+              <div className="service-icon"><img src="/images/placeholder/document-default.jpg" alt="Document" className="inline-icon" style={{width: 24, height: 24, borderRadius: "50%", objectFit: "cover", marginRight: 8}} /></div>
               <h3>Documents Techniques</h3>
               <p>
                 Accédez à des comptes d'exploitation prévisionnels et itinéraires 
@@ -108,7 +108,7 @@ export default function Landing() {
 
             {/* Service 2: Annuaire */}
             <div className="service-card">
-              <div className="service-icon">🌾</div>
+              <div className="service-icon"><img src="/images/cultures/mais.jpg" alt="Culture" className="inline-icon" style={{width: 24, height: 24, borderRadius: "50%", objectFit: "cover", marginRight: 8}} /></div>
               <h3>Annuaire des Agronomes</h3>
               <p>
                 Trouvez des agronomes qualifiés et validés dans votre canton 
@@ -143,7 +143,7 @@ export default function Landing() {
 
             {/* Service 4: Préventes */}
             <div className="service-card">
-              <div className="service-icon">📊</div>
+              <div className="service-icon"><img src="/images/hero/agriculture.jpg" alt="Statistiques" className="inline-icon" style={{width: 24, height: 24, borderRadius: "50%", objectFit: "cover", marginRight: 8}} /></div>
               <h3>Préventes Agricoles</h3>
               <p>
                 Sécurisez vos revenus en vendant votre production future 
@@ -225,7 +225,7 @@ export default function Landing() {
             </div>
 
             <div className="feature-box">
-              <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🎯</div>
+              <div style={{ fontSize: '3rem', marginBottom: '1rem' }}><img src="/images/hero/agriculture.jpg" alt="Objectif" className="inline-icon" style={{width: 48, height: 48, borderRadius: "50%", objectFit: "cover"}} /></div>
               <h4>Géolocalisé</h4>
               <p>Services adaptés à votre région, préfecture et canton</p>
             </div>

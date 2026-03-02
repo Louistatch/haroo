@@ -55,7 +55,7 @@ export const Header: React.FC<HeaderProps> = ({ isAuthenticated }) => {
               gap: '0.5rem'
             }}
           >
-            <span style={{ fontSize: '1.8rem' }}>🌾</span>
+            <span style={{ fontSize: '1.8rem' }}><img src="/images/cultures/mais.jpg" alt="Culture" className="inline-icon" style={{width: 24, height: 24, borderRadius: "50%", objectFit: "cover", marginRight: 8}} /></span>
             <span className="hide-mobile">Plateforme Agricole Togo</span>
             <span className="hide-desktop">PAT</span>
           </Link>

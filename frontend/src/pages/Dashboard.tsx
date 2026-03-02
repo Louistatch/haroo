@@ -69,8 +69,8 @@ export default function Dashboard() {
         {data.profile.statut_verification && (
           <div className={`verification-badge ${data.profile.statut_verification.toLowerCase()}`}>
             {data.profile.statut_verification === 'VERIFIE' ? '✓ Exploitant Vérifié' : 
-             data.profile.statut_verification === 'EN_ATTENTE' ? '⏳ Vérification en cours' :
-             '❌ Non vérifié'}
+             data.profile.statut_verification === 'EN_ATTENTE' ? '<img src="/images/hero/farmer.jpg" alt="En attente" className="inline-icon" style={{width: 20, height: 20, borderRadius: "50%", objectFit: "cover", marginRight: 8}} /> Vérification en cours' :
+             '<img src="/images/hero/market.jpg" alt="Erreur" className="inline-icon" style={{width: 20, height: 20, borderRadius: "50%", objectFit: "cover", marginRight: 8}} /> Non vérifié'}
           </div>
         )}
       </div>
@@ -87,7 +87,7 @@ export default function Dashboard() {
           </div>
 
           <div className="stat-card blue">
-            <div className="stat-icon">✅</div>
+            <div className="stat-icon"><img src="/images/hero/agriculture.jpg" alt="Succès" className="inline-icon" style={{width: 20, height: 20, borderRadius: "50%", objectFit: "cover", marginRight: 8}} /></div>
             <div className="stat-content">
               <h3>{data.stats.missions_terminees}</h3>
               <p>Missions terminées</p>
@@ -95,7 +95,7 @@ export default function Dashboard() {
           </div>
 
           <div className="stat-card orange">
-            <div className="stat-icon">📄</div>
+            <div className="stat-icon"><img src="/images/placeholder/document-default.jpg" alt="Document" className="inline-icon" style={{width: 24, height: 24, borderRadius: "50%", objectFit: "cover", marginRight: 8}} /></div>
             <div className="stat-content">
               <h3>{data.stats.documents_achetes}</h3>
               <p>Documents achetés</p>
@@ -103,7 +103,7 @@ export default function Dashboard() {
           </div>
 
           <div className="stat-card purple">
-            <div className="stat-icon">💰</div>
+            <div className="stat-icon"><img src="/images/hero/market.jpg" alt="Prix" className="inline-icon" style={{width: 20, height: 20, borderRadius: "50%", objectFit: "cover", marginRight: 8}} /></div>
             <div className="stat-content">
               <h3>{parseInt(data.stats.montant_depense).toLocaleString()} FCFA</h3>
               <p>Total dépensé</p>
@@ -113,11 +113,11 @@ export default function Dashboard() {
 
         {/* Informations du profil */}
         <div className="profile-section">
-          <h2>📊 Votre Profil</h2>
+          <h2><img src="/images/hero/agriculture.jpg" alt="Statistiques" className="inline-icon" style={{width: 24, height: 24, borderRadius: "50%", objectFit: "cover", marginRight: 8}} /> Votre Profil</h2>
           <div className="profile-details">
             {data.profile.superficie_totale && (
               <div className="detail-item">
-                <span className="label">🌾 Superficie totale:</span>
+                <span className="label"><img src="/images/cultures/mais.jpg" alt="Culture" className="inline-icon" style={{width: 24, height: 24, borderRadius: "50%", objectFit: "cover", marginRight: 8}} /> Superficie totale:</span>
                 <span className="value">{data.profile.superficie_totale} hectares</span>
               </div>
             )}
@@ -156,7 +156,7 @@ export default function Dashboard() {
             </a>
 
             <a href="/agronomists" className="action-card">
-              <div className="action-icon">👨‍🌾</div>
+              <div className="action-icon">👨‍<img src="/images/cultures/mais.jpg" alt="Culture" className="inline-icon" style={{width: 24, height: 24, borderRadius: "50%", objectFit: "cover", marginRight: 8}} /></div>
               <h3>Agronomes</h3>
               <p>Trouver un expert</p>
             </a>
@@ -180,7 +180,7 @@ export default function Dashboard() {
           <h2>📅 Activité récente</h2>
           <div className="activity-list">
             <div className="activity-item">
-              <div className="activity-icon">📄</div>
+              <div className="activity-icon"><img src="/images/placeholder/document-default.jpg" alt="Document" className="inline-icon" style={{width: 24, height: 24, borderRadius: "50%", objectFit: "cover", marginRight: 8}} /></div>
               <div className="activity-content">
                 <p className="activity-title">Document acheté</p>
                 <p className="activity-date">Il y a 2 jours</p>
@@ -188,7 +188,7 @@ export default function Dashboard() {
             </div>
 
             <div className="activity-item">
-              <div className="activity-icon">✅</div>
+              <div className="activity-icon"><img src="/images/hero/agriculture.jpg" alt="Succès" className="inline-icon" style={{width: 20, height: 20, borderRadius: "50%", objectFit: "cover", marginRight: 8}} /></div>
               <div className="activity-content">
                 <p className="activity-title">Mission terminée</p>
                 <p className="activity-date">Il y a 5 jours</p>
