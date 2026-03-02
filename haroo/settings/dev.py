@@ -8,7 +8,7 @@ from .base import *
 DEBUG = True
 
 # Hosts autorisés en développement
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', '0.0.0.0']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '0.0.0.0', '.replit.dev', '.replit.app', '.repl.co']
 
 # Utiliser SQLite en dev (sans PostGIS) pour simplifier le développement
 DATABASES = {

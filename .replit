@@ -1,0 +1,62 @@
+modules = ["python-3.12", "nodejs-20", "web", "bash"]
+[agent]
+expertMode = true
+
+[nix]
+channel = "stable-25_05"
+packages = ["cargo", "freetype", "glibcLocales", "lcms2", "libiconv", "libimagequant", "libjpeg", "libtiff", "libwebp", "libxcrypt", "openjpeg", "openssl", "pkg-config", "rustc", "tcl", "tk", "zlib"]
+
+[userenv]
+
+[userenv.shared]
+DJANGO_SETTINGS_MODULE = "haroo.settings.dev"
+DEBUG = "True"
+ALLOWED_HOSTS = "localhost,127.0.0.1,0.0.0.0,.replit.dev,.replit.app,.repl.co"
+USE_S3 = "False"
+USE_CLOUDINARY = "False"
+EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+DEFAULT_FROM_EMAIL = "noreply@haroo.tg"
+JWT_ACCESS_TOKEN_LIFETIME = "3600"
+JWT_REFRESH_TOKEN_LIFETIME = "86400"
+COMMISSION_AGRONOME = "10"
+COMMISSION_PREVENTE = "5"
+COMMISSION_TRANSPORT = "8"
+SALAIRE_MINIMUM_HORAIRE = "500"
+SMS_GATEWAY_SENDER_ID = "HAROO"
+FEDAPAY_ENVIRONMENT = "sandbox"
+CORS_ALLOWED_ORIGINS = "http://localhost:3000,http://localhost:5000"
+SECRET_KEY = "yhpXhoLfJ5VVQH5ACec_Ire-SMN1CFWVSUqHuImES1cU44h51FWwbBWOjzEL_N-Oo6U"
+ENCRYPTION_KEY = "Wp9SUy4UVGcVZmcNOWX5LCiX7kJf1ZFUH7_PypzTLIs"
+JWT_SECRET_KEY = "8xGiwgFDPMpHh3XM5xmqKjOJo2_pmnLktDwb5xdaOtnJ_Tmdd9uZQuU0xDT_whAQdag"
+
+[workflows]
+runButton = "Project"
+
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Start application"
+
+[[workflows.workflow]]
+name = "Start application"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "DJANGO_SETTINGS_MODULE=haroo.settings.dev python3 manage.py runserver 0.0.0.0:5000"
+waitForPort = 5000
+
+[workflows.workflow.metadata]
+outputType = "webview"
+
+[[ports]]
+localPort = 5000
+externalPort = 80
+
+[deployment]
+deploymentTarget = "autoscale"
+run = ["gunicorn", "--bind=0.0.0.0:5000", "--reuse-port", "--workers=2", "haroo.wsgi:application"]
