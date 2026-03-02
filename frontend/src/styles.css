@@ -1,0 +1,38 @@
+/* Import theme first */
+@import './styles/theme.css';
+
+/* Import responsive styles */
+@import './styles/responsive.css';
+@import './styles/forms.css';
+
+/* Legacy styles for backward compatibility */
+.auth-card,
+.profile-card {
+  max-width: 420px;
+  margin: 40px auto;
+  padding: var(--spacing-lg);
+  background: var(--card);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+}
+
+.muted {
+  color: var(--text-muted);
+  margin-top: var(--spacing-md);
+}
+
+.debug {
+  background: var(--bg-secondary);
+  padding: var(--spacing-md);
+  border-radius: var(--radius-md);
+  overflow: auto;
+  font-family: monospace;
+  font-size: var(--font-size-sm);
+}
+
+/* Animation globale pour le spinner */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

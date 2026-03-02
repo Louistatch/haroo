@@ -1,0 +1,12 @@
+# Dépendances de production
+
+-r base.txt
+
+# Serveur WSGI
+gunicorn==21.2.0
+
+# Monitoring et logging
+sentry-sdk==1.39.1
+
+# Performance
+django-redis==5.4.0

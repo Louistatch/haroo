@@ -1,0 +1,39 @@
+# Dépendances de base pour la Plateforme Agricole Intelligente du Togo (Haroo)
+
+# Django et extensions
+Django==4.2.7
+djangorestframework==3.14.0
+django-cors-headers==4.3.1
+django-environ==0.11.2
+django-redis==5.4.0
+django-storages==1.14.2
+django-filter==23.5
+
+# Base de données
+psycopg2-binary==2.9.9
+
+# Cache et tâches asynchrones
+redis==5.0.1
+celery==5.3.4
+
+# Sécurité et authentification
+python-jose[cryptography]==3.3.0
+bcrypt==4.1.2
+cryptography==41.0.7
+pyotp==2.9.0
+qrcode[pil]==7.4.2
+
+# Utilitaires
+requests==2.31.0
+Pillow==10.1.0
+
+# Manipulation de documents
+openpyxl==3.1.2
+python-docx==1.1.0
+
+# Stockage cloud
+boto3==1.34.10
+cloudinary==1.40.0
+
+# Sécurité des fichiers (optionnel - pour scan antivirus avancé)
+# python-magic==0.4.27  # Décommenter si disponible sur le système

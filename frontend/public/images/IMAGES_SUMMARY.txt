@@ -1,0 +1,49 @@
+======================================================================
+RÉSUMÉ DES IMAGES TÉLÉCHARGÉES
+Plateforme Agricole Intelligente du Togo
+======================================================================
+
+
+📁 HERO/
+──────────────────────────────────────────────────────────────────────
+  ✓ agriculture.jpg                   376.5 KB  Agriculture africaine
+  ✓ farmer.jpg                        579.2 KB  Agriculteur au travail
+  ✓ harvest.jpg                       588.9 KB  Récolte
+  ✓ market.jpg                        385.9 KB  Marché local
+
+📁 CULTURES/
+──────────────────────────────────────────────────────────────────────
+  ✓ mais.jpg                          168.2 KB  Maïs
+  ✓ riz.jpg                            73.6 KB  Riz
+  ✓ tomate.jpg                         26.3 KB  Tomates
+  ✓ oignon.jpg                        131.5 KB  Oignons
+  ✓ arachide.jpg                       95.9 KB  Arachides
+  ✓ manioc.jpg                         52.3 KB  Manioc
+  ✓ soja.jpg                          106.2 KB  Soja
+  ✓ coton.jpg                          50.0 KB  Coton
+
+📁 USERS/
+──────────────────────────────────────────────────────────────────────
+  ✓ agronomist-1.jpg                   25.4 KB  Agronome 1
+  ✓ agronomist-2.jpg                   25.1 KB  Agronome 2
+  ✓ agronomist-3.jpg                   31.5 KB  Agronome 3
+  ✓ agronomist-4.jpg                   25.2 KB  Agronome 4
+  ✓ agronomist-5.jpg                   17.9 KB  Agronome 5
+  ✓ agronomist-6.jpg                   30.6 KB  Agronome 6
+  ✓ agronomist-7.jpg                   35.1 KB  Agronome 7
+  ✓ agronomist-8.jpg                   20.5 KB  Agronome 8
+  ✓ agronomist-9.jpg                   21.8 KB  Agronome 9
+  ✓ agronomist-10.jpg                  27.0 KB  Agronome 10
+  ✓ agronomist-11.jpg                  19.1 KB  Agronome 11
+  ✓ agronomist-12.jpg                  40.2 KB  Agronome 12
+
+📁 PLACEHOLDER/
+──────────────────────────────────────────────────────────────────────
+  ✓ user-default.jpg                   12.0 KB  Avatar par défaut
+  ✓ document-default.jpg              178.4 KB  Document par défaut
+  ✓ culture-default.jpg               105.3 KB  Culture par défaut
+
+======================================================================
+Source: Unsplash (https://unsplash.com)
+License: Unsplash License (libre d'utilisation)
+======================================================================
