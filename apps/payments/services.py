@@ -135,26 +135,32 @@ class FedapayService:
         
         Args:
             payload: Corps de la requête webhook
-            signature: Signature fournie dans les headers
+            signature: Signature fournie dans les headers (hex ou sha256=hex)
             
         Returns:
             True si la signature est valide, False sinon
         """
         try:
-            # Fedapay utilise HMAC SHA256 pour signer les webhooks
             import hmac
             import hashlib
-            
-            expected_signature = hmac.new(
+
+            if not settings.FEDAPAY_WEBHOOK_SECRET:
+                logger.warning("FEDAPAY_WEBHOOK_SECRET non configuré — vérification ignorée en dev")
+                return True
+
+            expected = hmac.new(
                 settings.FEDAPAY_WEBHOOK_SECRET.encode('utf-8'),
                 payload.encode('utf-8'),
                 hashlib.sha256
             ).hexdigest()
-            
-            return hmac.compare_digest(expected_signature, signature)
-            
+
+            # FedaPay peut envoyer "sha256=<hex>" ou directement "<hex>"
+            sig = signature.removeprefix('sha256=')
+
+            return hmac.compare_digest(expected, sig)
+
         except Exception as e:
-            logger.error(f"Erreur lors de la vérification de la signature webhook: {str(e)}")
+            logger.error(f"Erreur vérification signature webhook: {str(e)}")
             return False
 
 
