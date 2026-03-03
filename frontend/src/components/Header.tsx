@@ -43,6 +43,7 @@ const navLinks = [
 
 const authLinks = [
   { to: "/home", label: "Tableau de bord" },
+  { to: "/missions", label: "Missions" },
   { to: "/documents", label: "Documents" },
   { to: "/purchases", label: "Mes achats" },
   { to: "/me", label: "Profil" },
