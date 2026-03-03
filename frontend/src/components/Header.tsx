@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import { getUnreadCount } from "../api/notifications";
 
 interface HeaderProps {
   isAuthenticated: boolean;
@@ -59,6 +60,12 @@ function IconSun() {
 function IconMoon() {
   return <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>;
 }
+function IconBell() {
+  return <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>;
+}
+function IconMail() {
+  return <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>;
+}
 function LogoIcon() {
   return (
     <svg width="30" height="30" viewBox="0 0 32 32" fill="none">
@@ -74,6 +81,8 @@ const PRIMARY_NAV = [
   { to: "/missions",    label: "Missions",         Icon: IconMissions  },
   { to: "/documents",   label: "Documents",        Icon: IconDocuments },
   { to: "/agronomists", label: "Agronomes",        Icon: IconAgronomes },
+  { to: "/jobs",        label: "Emplois",         Icon: IconMissions },
+  { to: "/messages",    label: "Messages",         Icon: IconMail },
 ];
 
 const USER_MENU = [
@@ -102,6 +111,7 @@ export const Header: React.FC<HeaderProps> = ({ isAuthenticated }) => {
   const [scrolled, setScrolled]       = useState(false);
   const [mobileOpen, setMobileOpen]   = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   const [theme, setTheme] = useState<"light" | "dark" | "auto">(() =>
     (localStorage.getItem("haroo-theme") as "light" | "dark" | "auto") || "auto"
   );
@@ -136,6 +146,20 @@ export const Header: React.FC<HeaderProps> = ({ isAuthenticated }) => {
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      const fetchUnread = async () => {
+        try {
+          const res = await getUnreadCount();
+          setUnreadCount(res.unread_count);
+        } catch {}
+      };
+      fetchUnread();
+      const interval = setInterval(fetchUnread, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [isAuthenticated]);
 
   const isDark = theme === "dark" || (theme === "auto" && window.matchMedia("(prefers-color-scheme: dark)").matches);
   const toggleTheme = () => setTheme(t => t === "dark" ? "light" : "dark");
@@ -207,6 +231,16 @@ export const Header: React.FC<HeaderProps> = ({ isAuthenticated }) => {
 
             {/* Right actions */}
             <div className="hide-mobile" style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+              {isAuthenticated && (
+                <Link to="/notifications" style={{ position: "relative", width: 34, height: 34, borderRadius: 8, background: onScroll ? "var(--bg-secondary)" : "rgba(255,255,255,0.15)", color: onScroll ? "var(--text-secondary)" : "white", display: "flex", alignItems: "center", justifyContent: "center", textDecoration: "none", transition: "all 0.2s" }}>
+                  <IconBell />
+                  {unreadCount > 0 && (
+                    <span style={{ position: "absolute", top: -2, right: -2, background: "#ef4444", color: "white", fontSize: 10, fontWeight: 800, padding: "1px 5px", borderRadius: 10, border: "2px solid var(--header-bg)" }}>
+                      {unreadCount}
+                    </span>
+                  )}
+                </Link>
+              )}
               <motion.button
                 whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.9 }}
                 onClick={toggleTheme}

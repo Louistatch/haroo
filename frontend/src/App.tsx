@@ -13,6 +13,10 @@ import PaymentSuccess from "./pages/PaymentSuccess";
 import Missions from "./pages/Missions";
 import Security from "./pages/Security";
 import Ratings from "./pages/Ratings";
+import Messaging from "./pages/Messaging";
+import Notifications from "./pages/Notifications";
+import Jobs from "./pages/Jobs";
+import Presales from "./pages/Presales";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Header from "./components/Header";
 
@@ -49,8 +53,12 @@ export default function App() {
           <Route path="/agronomists" element={<Agronomists />} />
           <Route path="/purchases" element={<ProtectedRoute><PurchaseHistory /></ProtectedRoute>} />
           <Route path="/missions" element={<ProtectedRoute><Missions /></ProtectedRoute>} />
+          <Route path="/jobs" element={<ProtectedRoute><Jobs /></ProtectedRoute>} />
+          <Route path="/presales" element={<ProtectedRoute><Presales /></ProtectedRoute>} />
           <Route path="/security" element={<ProtectedRoute><Security /></ProtectedRoute>} />
           <Route path="/ratings" element={<ProtectedRoute><Ratings /></ProtectedRoute>} />
+          <Route path="/messages" element={<ProtectedRoute><Messaging /></ProtectedRoute>} />
+          <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
           <Route path="/payment/success" element={<PaymentSuccess />} />
           <Route path="/me" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
           <Route path="*" element={<Navigate to="/" replace />} />

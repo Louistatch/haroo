@@ -140,7 +140,7 @@ export default function Documents() {
     if (!selectedDocument) return;
     try {
       setIsProcessing(true);
-      const response = await api.post(`/documents/${selectedDocument.id}/purchase`, {});
+      const response = await api.post(`/documents/${selectedDocument.id}/purchase/`, {});
       if (response.data.already_purchased) {
         success('Déjà acheté', 'Vous possédez déjà ce document');
         setIsModalOpen(false);

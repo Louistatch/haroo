@@ -28,6 +28,10 @@ urlpatterns = [
     path('api/v1/institutional/', include('apps.institutional.urls')),
     path('api/v1/compliance/', include('apps.compliance.urls')),
     path('api/v1/ratings/', include('apps.ratings.urls')),
+    path('api/v1/', include('apps.notifications.urls')),
+    path('api/v1/', include('apps.messaging.urls')),
+    path('api/v1/', include('apps.presales.urls')),
+    path('api/v1/', include('apps.jobs.urls')),
 ]
 
 # Ajouter les URLs de debug toolbar uniquement en mode DEBUG
