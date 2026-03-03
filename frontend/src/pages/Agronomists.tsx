@@ -228,7 +228,9 @@ export default function Agronomists() {
           {!loading && error && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
               style={{ textAlign: 'center', padding: '4rem 2rem', background: 'var(--surface)', borderRadius: '16px', border: '1px solid var(--border)' }}>
-              <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>⚠️</div>
+              <div style={{ width: 56, height: 56, borderRadius: '16px', background: 'rgba(239,68,68,0.06)', border: '1.5px solid rgba(239,68,68,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1rem' }}>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 9v4M12 17h.01" stroke="#ef4444" strokeWidth="1.8" strokeLinecap="round"/><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" stroke="#ef4444" strokeWidth="1.5" strokeLinejoin="round"/></svg>
+              </div>
               <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem' }}>{error}</p>
               <button onClick={fetchAgronomists}
                 style={{ padding: '0.6rem 1.5rem', background: '#6366f1', color: 'white', border: 'none', borderRadius: '10px', fontWeight: 600, cursor: 'pointer' }}>
@@ -241,7 +243,9 @@ export default function Agronomists() {
           {!loading && !error && agronomists.length === 0 && (
             <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.4 }}
               style={{ textAlign: 'center', padding: '5rem 2rem', background: 'var(--surface)', borderRadius: '16px', border: '1px solid var(--border)' }}>
-              <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>👨‍🌾</div>
+              <div style={{ width: 56, height: 56, borderRadius: '16px', background: 'var(--bg)', border: '1.5px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1rem' }}>
+                <svg width="26" height="26" viewBox="0 0 26 26" fill="none"><circle cx="13" cy="9" r="4.5" stroke="var(--text-muted)" strokeWidth="1.5"/><path d="M4 23c0-5 4-8.5 9-8.5s9 3.5 9 8.5" stroke="var(--text-muted)" strokeWidth="1.5" strokeLinecap="round"/></svg>
+              </div>
               <h3 style={{ color: 'var(--text)', marginBottom: '0.5rem' }}>Aucun agronome trouvé</h3>
               <p style={{ color: 'var(--text-muted)' }}>Essayez de modifier vos critères de recherche</p>
             </motion.div>
@@ -341,7 +345,7 @@ export default function Agronomists() {
                   style={{ position: 'absolute', top: '1rem', right: '1rem', background: 'rgba(255,255,255,0.2)', border: 'none', width: 36, height: 36, borderRadius: '50%', cursor: 'pointer', color: 'white', fontSize: '1.2rem', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background 0.2s' }}
                   onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.35)')}
                   onMouseLeave={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.2)')}>
-                  ✕
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 3l10 10M13 3L3 13" stroke="white" strokeWidth="2" strokeLinecap="round"/></svg>
                 </button>
                 <div style={{ width: 80, height: 80, borderRadius: '50%', background: 'rgba(255,255,255,0.25)', backdropFilter: 'blur(10px)', border: '3px solid rgba(255,255,255,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1rem' }}>
                   <span style={{ color: 'white', fontSize: '2rem', fontWeight: 800 }}>{getInitials(selected)}</span>

@@ -312,7 +312,9 @@ export default function Documents() {
             {!loading && documents.length === 0 && (
               <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.4 }}
                 style={{ textAlign: 'center', padding: '5rem 2rem', background: 'var(--surface)', borderRadius: '16px', border: '1px solid var(--border)' }}>
-                <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📂</div>
+                <div style={{ width: 56, height: 56, borderRadius: '16px', background: 'var(--bg)', border: '1.5px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1rem' }}>
+                  <svg width="26" height="26" viewBox="0 0 26 26" fill="none"><path d="M3 7a2 2 0 012-2h5l2 2h9a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" stroke="var(--text-muted)" strokeWidth="1.5" strokeLinejoin="round"/></svg>
+                </div>
                 <h3 style={{ color: 'var(--text)', marginBottom: '0.5rem' }}>Aucun document trouvé</h3>
                 <p style={{ color: 'var(--text-muted)' }}>Essayez de modifier vos filtres de recherche</p>
               </motion.div>
@@ -360,10 +362,12 @@ export default function Documents() {
 
                         <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1.25rem' }}>
                           <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '4px 10px', borderRadius: '100px', background: `${cultureColor}18`, color: cultureColor, fontSize: '0.78rem', fontWeight: 600 }}>
-                            🌱 {doc.culture}
+                            <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M5.5 9.5V5.5M5.5 5.5C5.5 5.5 3.5 3.5 2 4M5.5 5.5C5.5 5.5 7.5 3.5 9 4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/><circle cx="5.5" cy="2.5" r="1.5" stroke="currentColor" strokeWidth="1.2"/></svg>
+                            {doc.culture}
                           </span>
                           <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '4px 10px', borderRadius: '100px', background: 'var(--bg-secondary)', color: 'var(--text-secondary)', fontSize: '0.78rem', fontWeight: 500 }}>
-                            📍 {doc.canton || doc.prefecture || doc.region}
+                            <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M5.5 10S2 7 2 4.5a3.5 3.5 0 017 0C9 7 5.5 10 5.5 10z" stroke="currentColor" strokeWidth="1.2"/><circle cx="5.5" cy="4.5" r="1.2" stroke="currentColor" strokeWidth="1.2"/></svg>
+                            {doc.canton || doc.prefecture || doc.region}
                           </span>
                         </div>
 

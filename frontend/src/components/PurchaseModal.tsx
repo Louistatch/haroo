@@ -74,7 +74,7 @@ export default function PurchaseModal({ document, isOpen, onClose, onConfirm, is
                 }}
                 onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.3)')}
                 onMouseLeave={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.15)')}>
-                ✕
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
               </button>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
@@ -116,8 +116,8 @@ export default function PurchaseModal({ document, isOpen, onClose, onConfirm, is
               {/* detail rows */}
               <div style={{ marginBottom: '1.5rem' }}>
                 {[
-                  { label: 'Culture', value: document.culture, icon: '🌱' },
-                  { label: 'Localisation', value: location, icon: '📍' },
+                  { label: 'Culture', value: document.culture, icon: <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M7.5 13V7M7.5 7C7.5 7 5 5 3 6M7.5 7C7.5 7 10 5 12 6" stroke="var(--text-muted)" strokeWidth="1.3" strokeLinecap="round"/><circle cx="7.5" cy="4" r="1.5" stroke="var(--text-muted)" strokeWidth="1.3"/></svg> },
+                  { label: 'Localisation', value: location, icon: <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M7.5 13S3 9 3 6a4.5 4.5 0 019 0c0 3-4.5 7-4.5 7z" stroke="var(--text-muted)" strokeWidth="1.3"/><circle cx="7.5" cy="6" r="1.5" stroke="var(--text-muted)" strokeWidth="1.3"/></svg> },
                 ].map(({ label, value, icon }) => (
                   <div key={label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 0', borderBottom: '1px solid var(--border)' }}>
                     <span style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -127,7 +127,7 @@ export default function PurchaseModal({ document, isOpen, onClose, onConfirm, is
                   </div>
                 ))}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem 0 0', marginTop: '0.25rem' }}>
-                  <span style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>💳 Prix total</span>
+                  <span style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: 6 }}><svg width="15" height="15" viewBox="0 0 15 15" fill="none"><rect x="1" y="3" width="13" height="9" rx="1.5" stroke="var(--text-muted)" strokeWidth="1.3"/><path d="M1 6.5h13" stroke="var(--text-muted)" strokeWidth="1.3"/><path d="M3.5 9.5h3" stroke="var(--text-muted)" strokeWidth="1.3" strokeLinecap="round"/></svg> Prix total</span>
                   <span style={{ color: 'var(--primary)', fontSize: '1.5rem', fontWeight: 800 }}>{price} FCFA</span>
                 </div>
               </div>

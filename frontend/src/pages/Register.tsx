@@ -43,33 +43,64 @@ const CheckIcon = () => (
   </svg>
 );
 
+const IconExploitant = ({ color }: { color: string }) => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+    <path d="M3 18c0-4 3.5-7 9-7s9 3 9 7" stroke={color} strokeWidth="1.5" strokeLinecap="round"/>
+    <path d="M12 11V4M9 7l3-3 3 3" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M5 18c1-2 3-3 5-3h4c2 0 4 1 5 3" stroke={color} strokeWidth="1.5" strokeLinecap="round"/>
+  </svg>
+);
+const IconAgronome = ({ color }: { color: string }) => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+    <circle cx="12" cy="7" r="4" stroke={color} strokeWidth="1.5"/>
+    <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke={color} strokeWidth="1.5" strokeLinecap="round"/>
+    <path d="M16 3l1.5 1.5L19 3" stroke={color} strokeWidth="1.5" strokeLinecap="round"/>
+    <rect x="15" y="1" width="5" height="3" rx="1" stroke={color} strokeWidth="1.2"/>
+  </svg>
+);
+const IconOuvrier = ({ color }: { color: string }) => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+    <circle cx="12" cy="7" r="4" stroke={color} strokeWidth="1.5"/>
+    <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke={color} strokeWidth="1.5" strokeLinecap="round"/>
+    <path d="M8 10l-2 4h2l-1 3" stroke={color} strokeWidth="1.3" strokeLinecap="round"/>
+    <path d="M16 10l2 4h-2l1 3" stroke={color} strokeWidth="1.3" strokeLinecap="round"/>
+  </svg>
+);
+const IconAcheteur = ({ color }: { color: string }) => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+    <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" stroke={color} strokeWidth="1.5" strokeLinejoin="round"/>
+    <path d="M3 6h18" stroke={color} strokeWidth="1.5"/>
+    <path d="M16 10a4 4 0 01-8 0" stroke={color} strokeWidth="1.5" strokeLinecap="round"/>
+  </svg>
+);
+
 const USER_TYPES = [
   {
     value: "EXPLOITANT",
     label: "Exploitant Agricole",
     desc: "Je gère une exploitation",
-    icon: "🌾",
+    Icon: IconExploitant,
     color: "#16a34a",
   },
   {
     value: "AGRONOME",
     label: "Agronome",
     desc: "Je suis un expert agricole",
-    icon: "🎓",
+    Icon: IconAgronome,
     color: "#2563eb",
   },
   {
     value: "OUVRIER",
     label: "Ouvrier Agricole",
     desc: "Je travaille sur les champs",
-    icon: "🤝",
+    Icon: IconOuvrier,
     color: "#d97706",
   },
   {
     value: "ACHETEUR",
     label: "Acheteur",
     desc: "J'achète des produits agricoles",
-    icon: "🛒",
+    Icon: IconAcheteur,
     color: "#7c3aed",
   },
 ];
@@ -193,7 +224,7 @@ export default function Register() {
                   <div style={{ paddingTop: "0.3rem" }}>
                     <div style={{ fontSize: "0.85rem", fontWeight: done || active ? 700 : 500, color: done || active ? "white" : "rgba(255,255,255,0.4)", transition: "all 0.3s" }}>{s}</div>
                     {active && <div style={{ fontSize: "0.75rem", color: "#a78bfa", fontWeight: 500, marginTop: "0.2rem" }}>Étape en cours</div>}
-                    {done && <div style={{ fontSize: "0.75rem", color: "rgba(167,139,250,0.7)", fontWeight: 500, marginTop: "0.2rem" }}>Complété ✓</div>}
+                    {done && <div style={{ fontSize: "0.75rem", color: "rgba(167,139,250,0.7)", fontWeight: 500, marginTop: "0.2rem" }}>Complété</div>}
                   </div>
                 </div>
               );
@@ -277,7 +308,7 @@ export default function Register() {
                               <CheckIcon />
                             </motion.div>
                           )}
-                          <div style={{ fontSize: "1.6rem", marginBottom: "0.5rem" }}>{t.icon}</div>
+                          <div style={{ marginBottom: "0.65rem" }}><t.Icon color={selected ? t.color : "var(--text-muted)"} /></div>
                           <div style={{ fontSize: "0.9rem", fontWeight: 700, color: selected ? t.color : "var(--text)", marginBottom: "0.25rem" }}>{t.label}</div>
                           <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", lineHeight: 1.4 }}>{t.desc}</div>
                         </motion.button>

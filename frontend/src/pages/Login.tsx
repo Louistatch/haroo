@@ -30,11 +30,16 @@ const EyeIcon = ({ open }: { open: boolean }) => open ? (
   </svg>
 );
 
+const FeatDoc = () => <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 2h7l3 3v9a1 1 0 01-1 1H3a1 1 0 01-1-1V3a1 1 0 011-1z" stroke="currentColor" strokeWidth="1.4"/><path d="M10 2v3h3M5 8h6M5 11h4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/></svg>;
+const FeatUser = () => <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="5" r="3" stroke="currentColor" strokeWidth="1.4"/><path d="M2 14c0-3 2.7-5 6-5s6 2 6 5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/></svg>;
+const FeatChart = () => <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 12l4-4 3 3 5-6" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/><rect x="1" y="1" width="14" height="14" rx="2" stroke="currentColor" strokeWidth="1.2"/></svg>;
+const FeatCard = () => <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="1" y="3" width="14" height="10" rx="2" stroke="currentColor" strokeWidth="1.4"/><path d="M1 7h14" stroke="currentColor" strokeWidth="1.4"/><path d="M4 10h3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/></svg>;
+
 const features = [
-  { icon: "📄", label: "12+ documents techniques" },
-  { icon: "👨‍🌾", label: "Agronomes certifiés" },
-  { icon: "📊", label: "Analyses de marché" },
-  { icon: "💳", label: "Paiement Mobile Money" },
+  { icon: <FeatDoc />, label: "12+ documents techniques" },
+  { icon: <FeatUser />, label: "Agronomes certifiés" },
+  { icon: <FeatChart />, label: "Analyses de marché" },
+  { icon: <FeatCard />, label: "Paiement Mobile Money" },
 ];
 
 export default function Login() {
@@ -143,7 +148,7 @@ export default function Login() {
 
           <div style={{ marginBottom: "2.5rem" }}>
             <h1 style={{ fontSize: "1.85rem", fontWeight: 800, color: "var(--text)", margin: "0 0 0.5rem", letterSpacing: "-0.03em" }}>
-              Bon retour 👋
+              Bon retour
             </h1>
             <p style={{ color: "var(--text-muted)", fontSize: "0.95rem", margin: 0 }}>
               Connectez-vous à votre espace Haroo

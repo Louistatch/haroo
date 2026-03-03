@@ -1004,7 +1004,7 @@ export default function Landing() {
               © 2026 Haroo. Tous droits réservés.
             </span>
             <span style={{ color: "var(--text-muted)", fontSize: "0.8rem" }}>
-              Conçu pour les agriculteurs togolais 🌱
+              Conçu pour les agriculteurs togolais
             </span>
           </div>
         </div>
