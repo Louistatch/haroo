@@ -12,6 +12,7 @@ import PurchaseHistory from "./pages/PurchaseHistory";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import Missions from "./pages/Missions";
 import Security from "./pages/Security";
+import Ratings from "./pages/Ratings";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Header from "./components/Header";
 
@@ -49,6 +50,7 @@ export default function App() {
           <Route path="/purchases" element={<ProtectedRoute><PurchaseHistory /></ProtectedRoute>} />
           <Route path="/missions" element={<ProtectedRoute><Missions /></ProtectedRoute>} />
           <Route path="/security" element={<ProtectedRoute><Security /></ProtectedRoute>} />
+          <Route path="/ratings" element={<ProtectedRoute><Ratings /></ProtectedRoute>} />
           <Route path="/payment/success" element={<PaymentSuccess />} />
           <Route path="/me" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
           <Route path="*" element={<Navigate to="/" replace />} />

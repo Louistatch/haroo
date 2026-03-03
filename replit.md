@@ -59,6 +59,7 @@ frontend/                 # React + TypeScript frontend
       purchases.ts        # Purchase history API calls
       missions.ts         # Mission CRUD API calls
       twoFactor.ts        # 2FA setup/enable/disable/status API calls
+      ratings.ts          # Ratings: list, create, report API calls
     pages/
       Landing.tsx         # Public landing page
       Login.tsx           # Email login + Google OAuth (green split-screen, Neon Auth)
@@ -71,6 +72,7 @@ frontend/                 # React + TypeScript frontend
       Profile.tsx         # User profile: edit PATCH /users/me, change password modal
       Missions.tsx        # Mission management: role-based (EXPLOITANT/AGRONOME), create/accept/complete
       Security.tsx        # 2FA management: TOTP setup wizard, QR code, backup codes, disable flow
+      Ratings.tsx         # Avis/notations: received/given/pending tabs, star distribution, create modal, report modal
       PaymentSuccess.tsx  # Payment callback page
     components/
       Header.tsx          # Navigation header
