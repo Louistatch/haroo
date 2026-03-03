@@ -128,7 +128,7 @@ frontend/                 # React + TypeScript frontend
 
 - CORS: `CORS_ALLOW_ALL_ORIGINS = True` in dev.py
 - Cache: `DummyCache` in dev.py (disabled to avoid stale responses after seeding)
-- Database: SQLite at `db.sqlite3`
+- Database: **Neon PostgreSQL** (PostgreSQL 17.8) — host `ep-muddy-salad-aljfiixs-pooler.c-3.eu-central-1.aws.neon.tech`, db `neondb`; credentials via secrets `DB_PASSWORD`, env vars `DB_HOST/DB_NAME/DB_USER/DB_PORT/DB_SSL`
 - Seed data: Run `python manage.py seed_data` to populate 5 regions, 11+ prefectures, 40+ cantons, 2 document templates, 12 technical documents + 3 demo accounts
 - Demo accounts: `+22890000001/Demo123!` (exploitant), `+22890000002/Demo123!` (agronome), `+22890000003/Admin123!` (admin)
 - Admin: Django admin at `/admin/` (create superuser with `python manage.py createsuperuser`)

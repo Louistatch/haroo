@@ -10,15 +10,22 @@ DEBUG = True
 # Hosts autorisés en développement
 ALLOWED_HOSTS = ['localhost', '127.0.0.1', '0.0.0.0', '.replit.dev', '.replit.app', '.repl.co']
 
-# Utiliser SQLite en dev (sans PostGIS) pour simplifier le développement
+# PostgreSQL Neon (sans PostGIS — backend standard)
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': env('DB_NAME', default='neondb'),
+        'USER': env('DB_USER', default='neondb_owner'),
+        'PASSWORD': env('DB_PASSWORD', default=''),
+        'HOST': env('DB_HOST', default='localhost'),
+        'PORT': env('DB_PORT', default='5432'),
+        'OPTIONS': {
+            'sslmode': env('DB_SSL', default='require'),
+        },
     }
 }
 
-# Désactiver django.contrib.gis en dev si GDAL n'est pas disponible
+# Désactiver django.contrib.gis (PostGIS non disponible sur Neon)
 INSTALLED_APPS = [app for app in INSTALLED_APPS if app != 'django.contrib.gis']
 
 # CORS permissif en développement
