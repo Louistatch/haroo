@@ -1,191 +1,368 @@
 import React, { useEffect, useState } from "react";
-import { me } from "../api/auth";
-import { Container } from "../components/Layout";
+import { useNavigate } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
+import { me, updateProfile, changePassword, logout } from "../api/auth";
+
+const IconUser = () => <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="6" r="4" stroke="currentColor" strokeWidth="1.4"/><path d="M2 18c0-4.4 3.6-8 8-8s8 3.6 8 8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/></svg>;
+const IconPhone = () => <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M3 2.5A1.5 1.5 0 014.5 1h1a2 2 0 012 2v1a2 2 0 01-2 2H4L3 8s1 6 7 7c6-1 7-7 7-7l-1-2h-1.5a2 2 0 01-2-2V3a2 2 0 012-2h1A1.5 1.5 0 0117 2.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/></svg>;
+const IconLock = () => <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="3" y="8" width="12" height="9" rx="2" stroke="currentColor" strokeWidth="1.4"/><path d="M6 8V6a3 3 0 016 0v2" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/><circle cx="9" cy="12.5" r="1.2" fill="currentColor"/></svg>;
+const IconEye = ({ open }: { open: boolean }) => open ? (
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M1 8s3-5 7-5 7 5 7 5-3 5-7 5-7-5-7-5z" stroke="currentColor" strokeWidth="1.3"/><circle cx="8" cy="8" r="2" stroke="currentColor" strokeWidth="1.3"/></svg>
+) : (
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M1 8s3-5 7-5 7 5 7 5-3 5-7 5-7-5-7-5z" stroke="currentColor" strokeWidth="1.3"/><circle cx="8" cy="8" r="2" stroke="currentColor" strokeWidth="1.3"/><line x1="2" y1="2" x2="14" y2="14" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/></svg>
+);
+const IconCheck = () => <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7l3.5 3.5L12 3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>;
+const IconLogout = () => <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M7 16H3a1 1 0 01-1-1V3a1 1 0 011-1h4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/><path d="M12 13l5-4-5-4M17 9H7" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>;
+const IconEdit = () => <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M11 2.5l2.5 2.5L5 13.5H2.5V11L11 2.5z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round"/></svg>;
+const IconX = () => <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>;
+
+const USER_TYPE_CONFIG: Record<string, { label: string; color: string }> = {
+  EXPLOITANT:  { label: "Exploitant Agricole", color: "#16a34a" },
+  AGRONOME:    { label: "Agronome",             color: "#2563eb" },
+  OUVRIER:     { label: "Ouvrier Agricole",     color: "#d97706" },
+  ACHETEUR:    { label: "Acheteur",             color: "#7c3aed" },
+  INSTITUTION: { label: "Institution",          color: "#0e7490" },
+};
+
+function getInitials(user: any) {
+  const f = user.first_name?.[0] || "";
+  const l = user.last_name?.[0] || "";
+  return (f + l).toUpperCase() || user.username?.[0]?.toUpperCase() || "?";
+}
+
+const inputBase: React.CSSProperties = {
+  width: "100%", padding: "0.75rem 1rem", borderRadius: "10px",
+  border: "1.5px solid var(--border)", background: "var(--bg)",
+  color: "var(--text)", fontSize: "0.95rem", outline: "none",
+  transition: "border-color 0.2s, box-shadow 0.2s", boxSizing: "border-box",
+};
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "0.4rem" }}>
+        {label}
+      </label>
+      {children}
+    </div>
+  );
+}
 
 export default function Profile() {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+
+  // Edit form
+  const [editing, setEditing] = useState(false);
+  const [form, setForm] = useState({ first_name: "", last_name: "", username: "", email: "" });
+  const [saving, setSaving] = useState(false);
+  const [saveMsg, setSaveMsg] = useState("");
+  const [saveErr, setSaveErr] = useState("");
+
+  // Change password modal
+  const [showPwdModal, setShowPwdModal] = useState(false);
+  const [pwd, setPwd] = useState({ old: "", new: "", confirm: "" });
+  const [showOld, setShowOld] = useState(false);
+  const [showNew, setShowNew] = useState(false);
+  const [pwdSaving, setPwdSaving] = useState(false);
+  const [pwdMsg, setPwdMsg] = useState("");
+  const [pwdErr, setPwdErr] = useState("");
 
   useEffect(() => {
     me()
-      .then(setUser)
-      .catch(() => {
-        localStorage.removeItem("access_token");
-        localStorage.removeItem("refresh_token");
-        window.location.href = "/login";
-      })
+      .then((u) => { setUser(u); setForm({ first_name: u.first_name, last_name: u.last_name, username: u.username, email: u.email }); })
+      .catch(() => { logout(); navigate("/login"); })
       .finally(() => setLoading(false));
-  }, []);
+  }, [navigate]);
 
-  if (loading) return (
-    <Container>
-      <div style={{ textAlign: 'center', padding: '2rem' }}>
-        Chargement...
+  async function handleSave(e: React.FormEvent) {
+    e.preventDefault();
+    setSaving(true); setSaveErr(""); setSaveMsg("");
+    try {
+      const res = await updateProfile(form);
+      setUser(res.user || { ...user, ...form });
+      setSaveMsg("Profil mis à jour avec succès");
+      setEditing(false);
+      setTimeout(() => setSaveMsg(""), 3000);
+    } catch (err: any) {
+      const d = err?.response?.data;
+      setSaveErr(d?.detail || d?.username?.[0] || d?.email?.[0] || "Erreur lors de la mise à jour");
+    } finally { setSaving(false); }
+  }
+
+  async function handleChangePassword(e: React.FormEvent) {
+    e.preventDefault();
+    if (pwd.new !== pwd.confirm) { setPwdErr("Les mots de passe ne correspondent pas"); return; }
+    setPwdSaving(true); setPwdErr(""); setPwdMsg("");
+    try {
+      await changePassword(pwd.old, pwd.new, pwd.confirm);
+      setPwdMsg("Mot de passe modifié avec succès");
+      setPwd({ old: "", new: "", confirm: "" });
+      setTimeout(() => { setPwdMsg(""); setShowPwdModal(false); }, 2000);
+    } catch (err: any) {
+      const d = err?.response?.data;
+      setPwdErr(d?.detail || d?.old_password?.[0] || d?.new_password?.[0] || "Erreur lors du changement de mot de passe");
+    } finally { setPwdSaving(false); }
+  }
+
+  if (loading) {
+    return (
+      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--bg)" }}>
+        <motion.div animate={{ rotate: 360 }} transition={{ duration: 0.8, repeat: Infinity, ease: "linear" }}
+          style={{ width: 32, height: 32, border: "3px solid var(--border)", borderTop: "3px solid var(--primary)", borderRadius: "50%" }} />
       </div>
-    </Container>
-  );
+    );
+  }
 
   if (!user) return null;
 
-  const getUserTypeLabel = (type: string) => {
-    const types: Record<string, string> = {
-      'EXPLOITANT': 'Exploitant Agricole',
-      'AGRONOME': 'Agronome',
-      'OUVRIER': 'Ouvrier Agricole',
-      'ACHETEUR': 'Acheteur',
-      'INSTITUTION': 'Institution'
-    };
-    return types[type] || type;
-  };
+  const typeConf = USER_TYPE_CONFIG[user.user_type] || { label: user.user_type, color: "#6366f1" };
 
   return (
-    <Container>
-      <div className="profile-card" style={{ maxWidth: '800px', margin: '2rem auto' }}>
-        <h2 style={{ marginBottom: '2rem', color: 'var(--primary)' }}>Mon Profil</h2>
-        
-        <div style={{ display: 'grid', gap: '1.5rem' }}>
-          {/* Informations de base */}
-          <section>
-            <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem', color: '#333' }}>
-              Informations personnelles
-            </h3>
-            <div style={{ display: 'grid', gap: '0.75rem' }}>
-              <div className="info-row">
-                <strong>Nom complet:</strong>
-                <span>{user.first_name} {user.last_name}</span>
-              </div>
-              <div className="info-row">
-                <strong>Nom d'utilisateur:</strong>
-                <span>{user.username}</span>
-              </div>
-              <div className="info-row">
-                <strong>Email:</strong>
-                <span>{user.email || 'Non renseigné'}</span>
-              </div>
-              <div className="info-row">
-                <strong>Téléphone:</strong>
-                <span>{user.phone_number}</span>
-              </div>
-              <div className="info-row">
-                <strong>Type de compte:</strong>
-                <span style={{ 
-                  background: 'var(--primary)', 
-                  color: 'white', 
-                  padding: '0.25rem 0.75rem', 
-                  borderRadius: '4px',
-                  fontSize: '0.9rem'
-                }}>
-                  {getUserTypeLabel(user.user_type)}
+    <div style={{ minHeight: "100vh", background: "var(--bg)", paddingTop: "5rem" }}>
+      <div style={{ maxWidth: 700, margin: "0 auto", padding: "2rem 1.5rem" }}>
+
+        {/* ── Header card ── */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.45 }}
+          style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "20px", padding: "2rem", marginBottom: "1.25rem", display: "flex", alignItems: "center", gap: "1.5rem" }}>
+          <div style={{ width: 70, height: 70, borderRadius: "50%", background: `${typeConf.color}18`, border: `2px solid ${typeConf.color}40`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <span style={{ color: typeConf.color, fontWeight: 800, fontSize: "1.6rem", letterSpacing: "-0.02em" }}>{getInitials(user)}</span>
+          </div>
+          <div style={{ flex: 1 }}>
+            <h1 style={{ margin: "0 0 0.25rem", fontSize: "1.4rem", fontWeight: 800, color: "var(--text)", letterSpacing: "-0.02em" }}>
+              {user.first_name ? `${user.first_name} ${user.last_name}` : user.username}
+            </h1>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", alignItems: "center" }}>
+              <span style={{ background: `${typeConf.color}15`, color: typeConf.color, padding: "0.2rem 0.65rem", borderRadius: "100px", fontSize: "0.78rem", fontWeight: 700 }}>
+                {typeConf.label}
+              </span>
+              <span style={{ color: "var(--text-muted)", fontSize: "0.82rem" }}>{user.phone_number}</span>
+              {user.phone_verified && (
+                <span style={{ display: "flex", alignItems: "center", gap: "4px", background: "#dcfce7", color: "#16a34a", padding: "0.15rem 0.55rem", borderRadius: "100px", fontSize: "0.75rem", fontWeight: 600 }}>
+                  <IconCheck /> Vérifié
+                </span>
+              )}
+            </div>
+          </div>
+          <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
+            onClick={() => setEditing(!editing)}
+            style={{ display: "flex", alignItems: "center", gap: "0.4rem", padding: "0.55rem 1rem", background: editing ? "var(--bg)" : "var(--primary)", color: editing ? "var(--text-secondary)" : "white", border: editing ? "1.5px solid var(--border)" : "none", borderRadius: "10px", fontWeight: 600, fontSize: "0.85rem", cursor: "pointer" }}>
+            <IconEdit /> {editing ? "Annuler" : "Modifier"}
+          </motion.button>
+        </motion.div>
+
+        {/* success/error global */}
+        <AnimatePresence>
+          {saveMsg && (
+            <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+              style={{ display: "flex", alignItems: "center", gap: "0.5rem", padding: "0.75rem 1rem", background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: "10px", marginBottom: "1rem", color: "#16a34a", fontWeight: 600, fontSize: "0.88rem" }}>
+              <IconCheck /> {saveMsg}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* ── Edit Form ── */}
+        <AnimatePresence>
+          {editing && (
+            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}
+              style={{ background: "var(--surface)", border: "1.5px solid var(--primary)", borderRadius: "16px", padding: "1.75rem", marginBottom: "1.25rem", overflow: "hidden" }}>
+              <div style={{ fontWeight: 700, color: "var(--text)", marginBottom: "1.25rem", fontSize: "0.95rem" }}>Modifier le profil</div>
+              <form onSubmit={handleSave} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+                  <Field label="Prénom">
+                    <input value={form.first_name} onChange={e => setForm(f => ({ ...f, first_name: e.target.value }))} style={inputBase}
+                      onFocus={e => { e.target.style.borderColor = "var(--primary)"; e.target.style.boxShadow = "0 0 0 3px rgba(22,163,74,0.12)"; }}
+                      onBlur={e => { e.target.style.borderColor = "var(--border)"; e.target.style.boxShadow = "none"; }} />
+                  </Field>
+                  <Field label="Nom">
+                    <input value={form.last_name} onChange={e => setForm(f => ({ ...f, last_name: e.target.value }))} style={inputBase}
+                      onFocus={e => { e.target.style.borderColor = "var(--primary)"; e.target.style.boxShadow = "0 0 0 3px rgba(22,163,74,0.12)"; }}
+                      onBlur={e => { e.target.style.borderColor = "var(--border)"; e.target.style.boxShadow = "none"; }} />
+                  </Field>
+                </div>
+                <Field label="Nom d'utilisateur">
+                  <input value={form.username} onChange={e => setForm(f => ({ ...f, username: e.target.value }))} required style={inputBase}
+                    onFocus={e => { e.target.style.borderColor = "var(--primary)"; e.target.style.boxShadow = "0 0 0 3px rgba(22,163,74,0.12)"; }}
+                    onBlur={e => { e.target.style.borderColor = "var(--border)"; e.target.style.boxShadow = "none"; }} />
+                </Field>
+                <Field label="Email (optionnel)">
+                  <input type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} style={inputBase}
+                    onFocus={e => { e.target.style.borderColor = "var(--primary)"; e.target.style.boxShadow = "0 0 0 3px rgba(22,163,74,0.12)"; }}
+                    onBlur={e => { e.target.style.borderColor = "var(--border)"; e.target.style.boxShadow = "none"; }} />
+                </Field>
+                {saveErr && (
+                  <div style={{ color: "#ef4444", fontSize: "0.85rem", fontWeight: 500 }}>{saveErr}</div>
+                )}
+                <motion.button type="submit" disabled={saving} whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.98 }}
+                  style={{ padding: "0.8rem", background: "var(--primary)", color: "white", border: "none", borderRadius: "10px", fontWeight: 700, fontSize: "0.95rem", cursor: saving ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem", opacity: saving ? 0.8 : 1 }}>
+                  {saving ? (
+                    <><motion.div animate={{ rotate: 360 }} transition={{ duration: 0.7, repeat: Infinity, ease: "linear" }}
+                      style={{ width: 16, height: 16, border: "2px solid rgba(255,255,255,0.4)", borderTop: "2px solid white", borderRadius: "50%" }} />
+                    Enregistrement...</>
+                  ) : "Enregistrer les modifications"}
+                </motion.button>
+              </form>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* ── Info sections ── */}
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
+          style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+
+          {/* Personal info */}
+          <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "16px", padding: "1.5rem" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1.25rem" }}>
+              <div style={{ color: "var(--text-muted)" }}><IconUser /></div>
+              <span style={{ fontWeight: 700, color: "var(--text)", fontSize: "0.92rem" }}>Informations personnelles</span>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
+              {[
+                ["Prénom", user.first_name || "—"],
+                ["Nom", user.last_name || "—"],
+                ["Nom d'utilisateur", user.username],
+                ["Email", user.email || "Non renseigné"],
+              ].map(([k, v]) => (
+                <div key={k} style={{ padding: "0.75rem", background: "var(--bg)", borderRadius: "10px" }}>
+                  <div style={{ fontSize: "0.7rem", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "0.25rem" }}>{k}</div>
+                  <div style={{ fontWeight: 600, color: "var(--text)", fontSize: "0.88rem" }}>{v}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Contact */}
+          <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "16px", padding: "1.5rem" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1.25rem" }}>
+              <div style={{ color: "var(--text-muted)" }}><IconPhone /></div>
+              <span style={{ fontWeight: 700, color: "var(--text)", fontSize: "0.92rem" }}>Contact & vérification</span>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0.85rem 1rem", background: "var(--bg)", borderRadius: "10px" }}>
+                <div>
+                  <div style={{ fontSize: "0.7rem", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "0.2rem" }}>Téléphone</div>
+                  <div style={{ fontWeight: 600, color: "var(--text)", fontSize: "0.9rem" }}>{user.phone_number}</div>
+                </div>
+                <span style={{ padding: "0.2rem 0.7rem", borderRadius: "100px", fontSize: "0.75rem", fontWeight: 600, background: user.phone_verified ? "#dcfce7" : "#fef3c7", color: user.phone_verified ? "#16a34a" : "#92400e" }}>
+                  {user.phone_verified ? "Vérifié" : "Non vérifié"}
                 </span>
               </div>
             </div>
-          </section>
+          </div>
 
-          {/* Sécurité */}
-          <section>
-            <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem', color: '#333' }}>
-              Sécurité
-            </h3>
-            <div style={{ display: 'grid', gap: '0.75rem' }}>
-              <div className="info-row">
-                <strong>Téléphone vérifié:</strong>
-                <span style={{ color: user.phone_verified ? 'green' : 'orange' }}>
-                  {user.phone_verified ? '✓ Vérifié' : '⚠ Non vérifié'}
-                </span>
-              </div>
-              <div className="info-row">
-                <strong>Authentification 2FA:</strong>
-                <span style={{ color: user.two_factor_enabled ? 'green' : '#666' }}>
-                  {user.two_factor_enabled ? '✓ Activée' : 'Désactivée'}
-                </span>
-              </div>
+          {/* Security */}
+          <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "16px", padding: "1.5rem" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1.25rem" }}>
+              <div style={{ color: "var(--text-muted)" }}><IconLock /></div>
+              <span style={{ fontWeight: 700, color: "var(--text)", fontSize: "0.92rem" }}>Sécurité</span>
             </div>
-          </section>
-
-          {/* Dates */}
-          <section>
-            <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem', color: '#333' }}>
-              Informations du compte
-            </h3>
-            <div style={{ display: 'grid', gap: '0.75rem' }}>
-              <div className="info-row">
-                <strong>Membre depuis:</strong>
-                <span>{new Date(user.created_at).toLocaleDateString('fr-FR', {
-                  day: '2-digit',
-                  month: 'long',
-                  year: 'numeric'
-                })}</span>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0.85rem 1rem", background: "var(--bg)", borderRadius: "10px", marginBottom: "0.75rem" }}>
+              <div>
+                <div style={{ fontWeight: 600, color: "var(--text)", fontSize: "0.9rem" }}>Authentification 2FA</div>
+                <div style={{ color: "var(--text-muted)", fontSize: "0.78rem" }}>{user.two_factor_enabled ? "Activée" : "Non configurée"}</div>
               </div>
-              <div className="info-row">
-                <strong>Dernière mise à jour:</strong>
-                <span>{new Date(user.updated_at).toLocaleDateString('fr-FR', {
-                  day: '2-digit',
-                  month: 'long',
-                  year: 'numeric'
-                })}</span>
-              </div>
+              <span style={{ padding: "0.2rem 0.7rem", borderRadius: "100px", fontSize: "0.75rem", fontWeight: 600, background: user.two_factor_enabled ? "#dcfce7" : "var(--border)", color: user.two_factor_enabled ? "#16a34a" : "var(--text-muted)" }}>
+                {user.two_factor_enabled ? "Actif" : "Inactif"}
+              </span>
             </div>
-          </section>
+            <motion.button whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.98 }}
+              onClick={() => { setShowPwdModal(true); setPwd({ old: "", new: "", confirm: "" }); setPwdErr(""); setPwdMsg(""); }}
+              style={{ width: "100%", padding: "0.75rem", background: "var(--bg)", border: "1.5px solid var(--border)", borderRadius: "10px", color: "var(--text)", fontWeight: 600, fontSize: "0.88rem", cursor: "pointer" }}>
+              Changer le mot de passe
+            </motion.button>
+          </div>
 
-          {/* Actions */}
-          <section style={{ marginTop: '1rem' }}>
-            <button 
-              style={{
-                background: 'var(--primary)',
-                color: 'white',
-                padding: '0.75rem 1.5rem',
-                border: 'none',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                fontSize: '1rem',
-                marginRight: '1rem'
-              }}
-              onClick={() => alert('Fonctionnalité de modification à venir')}
-            >
-              Modifier le profil
-            </button>
-            <button 
-              style={{
-                background: '#dc3545',
-                color: 'white',
-                padding: '0.75rem 1.5rem',
-                border: 'none',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                fontSize: '1rem'
-              }}
-              onClick={() => {
-                localStorage.removeItem("access_token");
-                localStorage.removeItem("refresh_token");
-                window.location.href = "/login";
-              }}
-            >
-              Se déconnecter
-            </button>
-          </section>
-        </div>
+          {/* Account meta */}
+          <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "16px", padding: "1.5rem" }}>
+            <div style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "1rem" }}>Informations du compte</div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
+              {[
+                ["Membre depuis", new Date(user.created_at).toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" })],
+                ["Dernière mise à jour", new Date(user.updated_at).toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" })],
+              ].map(([k, v]) => (
+                <div key={k} style={{ padding: "0.75rem", background: "var(--bg)", borderRadius: "10px" }}>
+                  <div style={{ fontSize: "0.7rem", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "0.25rem" }}>{k}</div>
+                  <div style={{ fontWeight: 600, color: "var(--text)", fontSize: "0.85rem" }}>{v}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Logout */}
+          <motion.button whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.98 }}
+            onClick={() => { logout(); navigate("/login"); }}
+            style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem", padding: "0.85rem", background: "rgba(239,68,68,0.06)", border: "1.5px solid rgba(239,68,68,0.2)", borderRadius: "12px", color: "#ef4444", fontWeight: 700, fontSize: "0.95rem", cursor: "pointer" }}>
+            <IconLogout /> Se déconnecter
+          </motion.button>
+        </motion.div>
       </div>
 
-      <style>{`
-        .info-row {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 0.75rem;
-          background: #f8f9fa;
-          border-radius: 6px;
-        }
-        .info-row strong {
-          color: #555;
-          font-weight: 500;
-        }
-        .profile-card section {
-          padding: 1.5rem;
-          background: white;
-          border-radius: 8px;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-      `}</style>
-    </Container>
+      {/* ── Change Password Modal ── */}
+      <AnimatePresence>
+        {showPwdModal && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: "1.5rem" }}
+            onClick={e => { if (e.target === e.currentTarget) setShowPwdModal(false); }}>
+            <motion.div initial={{ scale: 0.92, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.92, opacity: 0 }}
+              transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+              style={{ background: "var(--surface)", borderRadius: "20px", width: "100%", maxWidth: 440, padding: "2rem", boxShadow: "0 24px 60px rgba(0,0,0,0.2)" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
+                <div style={{ fontWeight: 800, color: "var(--text)", fontSize: "1.1rem" }}>Changer le mot de passe</div>
+                <button onClick={() => setShowPwdModal(false)}
+                  style={{ background: "var(--bg)", border: "1px solid var(--border)", borderRadius: "8px", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "var(--text-muted)" }}>
+                  <IconX />
+                </button>
+              </div>
+
+              <AnimatePresence>
+                {pwdErr && (
+                  <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+                    style={{ padding: "0.75rem 1rem", background: "rgba(239,68,68,0.08)", border: "1.5px solid rgba(239,68,68,0.2)", borderRadius: "10px", color: "#ef4444", fontSize: "0.85rem", fontWeight: 500, marginBottom: "1rem" }}>
+                    {pwdErr}
+                  </motion.div>
+                )}
+                {pwdMsg && (
+                  <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+                    style={{ display: "flex", alignItems: "center", gap: "0.5rem", padding: "0.75rem 1rem", background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: "10px", color: "#16a34a", fontSize: "0.85rem", fontWeight: 600, marginBottom: "1rem" }}>
+                    <IconCheck /> {pwdMsg}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              <form onSubmit={handleChangePassword} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+                {[
+                  { label: "Mot de passe actuel", key: "old" as const, show: showOld, toggleShow: () => setShowOld(v => !v) },
+                  { label: "Nouveau mot de passe", key: "new" as const, show: showNew, toggleShow: () => setShowNew(v => !v) },
+                  { label: "Confirmer le nouveau", key: "confirm" as const, show: showNew, toggleShow: () => setShowNew(v => !v) },
+                ].map(({ label, key, show, toggleShow }) => (
+                  <Field key={key} label={label}>
+                    <div style={{ position: "relative" }}>
+                      <input type={show ? "text" : "password"} value={pwd[key]} required
+                        onChange={e => setPwd(p => ({ ...p, [key]: e.target.value }))}
+                        style={{ ...inputBase, paddingRight: "2.8rem" }}
+                        onFocus={e => { e.target.style.borderColor = "var(--primary)"; e.target.style.boxShadow = "0 0 0 3px rgba(22,163,74,0.12)"; }}
+                        onBlur={e => { e.target.style.borderColor = "var(--border)"; e.target.style.boxShadow = "none"; }} />
+                      <button type="button" onClick={toggleShow}
+                        style={{ position: "absolute", right: "0.75rem", top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)", display: "flex" }}>
+                        <IconEye open={show} />
+                      </button>
+                    </div>
+                  </Field>
+                ))}
+                <motion.button type="submit" disabled={pwdSaving} whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.98 }}
+                  style={{ padding: "0.85rem", background: "var(--primary)", color: "white", border: "none", borderRadius: "10px", fontWeight: 700, fontSize: "0.95rem", cursor: pwdSaving ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem", opacity: pwdSaving ? 0.8 : 1, marginTop: "0.25rem" }}>
+                  {pwdSaving ? (
+                    <><motion.div animate={{ rotate: 360 }} transition={{ duration: 0.7, repeat: Infinity, ease: "linear" }}
+                      style={{ width: 16, height: 16, border: "2px solid rgba(255,255,255,0.4)", borderTop: "2px solid white", borderRadius: "50%" }} />
+                    Modification...</>
+                  ) : "Confirmer le changement"}
+                </motion.button>
+              </form>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   );
 }

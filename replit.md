@@ -59,13 +59,14 @@ frontend/                 # React + TypeScript frontend
       purchases.ts        # Purchase history API calls
     pages/
       Landing.tsx         # Public landing page
-      Login.tsx           # Phone number login
-      Register.tsx        # Account registration
-      Dashboard.tsx       # Authenticated user dashboard
+      Login.tsx           # Phone number login (green split-screen)
+      Register.tsx        # Account registration (purple 3-step wizard)
+      Home.tsx            # Post-login hub: real purchase count, user stats, quick actions by type
+      Dashboard.tsx       # Redirects to /home (alias)
       Documents.tsx       # Browse/purchase technical documents
       Agronomists.tsx     # Agronomist directory
-      PurchaseHistory.tsx # Purchase history + download
-      Profile.tsx         # User profile management
+      PurchaseHistory.tsx # Purchase history: card grid, filters, download/regenerate (inline styles)
+      Profile.tsx         # User profile: edit PATCH /users/me, change password modal
       PaymentSuccess.tsx  # Payment callback page
     components/
       Header.tsx          # Navigation header
@@ -128,9 +129,13 @@ frontend/                 # React + TypeScript frontend
 - CORS: `CORS_ALLOW_ALL_ORIGINS = True` in dev.py
 - Cache: `DummyCache` in dev.py (disabled to avoid stale responses after seeding)
 - Database: SQLite at `db.sqlite3`
-- Seed data: Run `python manage.py seed_data` to populate 5 regions, 11+ prefectures, 40+ cantons, 2 document templates, 12 technical documents
+- Seed data: Run `python manage.py seed_data` to populate 5 regions, 11+ prefectures, 40+ cantons, 2 document templates, 12 technical documents + 3 demo accounts
+- Demo accounts: `+22890000001/Demo123!` (exploitant), `+22890000002/Demo123!` (agronome), `+22890000003/Admin123!` (admin)
 - Admin: Django admin at `/admin/` (create superuser with `python manage.py createsuperuser`)
 - Phone format: `+228XXXXXXXX` (Togolese numbers only)
 - Auth: JWT tokens stored in `localStorage` (access_token, refresh_token)
 - Token refresh: Automatic via axios interceptor in `src/api/auth.ts`
 - Backend binding: Must use `0.0.0.0:8000` (not `127.0.0.1:8000`) for Replit workflow port detection to work
+- Design rule: All authenticated pages (Home, Profile, PurchaseHistory, Documents, Agronomists) use **inline styles + Framer Motion** only — zero external CSS file dependencies
+- Bug fixed: `changePassword()` in auth.ts now sends `new_password_confirm` (was `confirm_password`) matching ChangePasswordSerializer
+- `Dashboard` route redirects to `/home` to eliminate duplication

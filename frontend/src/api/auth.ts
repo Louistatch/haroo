@@ -117,8 +117,8 @@ export async function updateProfile(data: any) {
   return res.data;
 }
 
-export async function changePassword(old_password: string, new_password: string, confirm_password: string) {
-  const res = await api.post("/users/me/change-password", { old_password, new_password, confirm_password });
+export async function changePassword(old_password: string, new_password: string, new_password_confirm: string) {
+  const res = await api.post("/users/me/change-password", { old_password, new_password, new_password_confirm });
   return res.data;
 }
 
