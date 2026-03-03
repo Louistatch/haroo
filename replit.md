@@ -111,6 +111,17 @@ frontend/                 # React + TypeScript frontend
 
 ### Frontend
 - `react@18`, `react-router-dom@6`, `axios`, `typescript`, `vite@7`
+- `framer-motion` — Smooth animations and parallax effects
+
+## Design System
+
+- **Theme**: `frontend/src/styles/theme.css` — Full CSS custom properties system (colors, spacing, typography, shadows, radii, z-index)
+- **Font**: Inter (Google Fonts) — loaded via `@import` in theme.css
+- **Dark mode**: `prefers-color-scheme` auto + manual toggle stored in `localStorage` as `haroo-theme`; applied via `data-theme` attribute on `document.documentElement`
+- **Header**: Glassmorphism scroll-aware header (`Header.tsx`); transparent only on landing page (`/`), solid on all other pages; active nav indicator, dark mode toggle, mobile menu with AnimatePresence
+- **Landing**: Premium Stripe/Notion-style page (`Landing.tsx`) — animated hero with parallax + word-switcher, animated counters, staggered service/feature cards, testimonials, strong CTAs
+- **Animations**: `AnimatedSection.tsx` provides `AnimatedSection`, `StaggerContainer`, `StaggerItem` components for scroll-triggered Framer Motion animations
+- **Legacy compatibility**: Theme exports aliases (`--card`, `--spacing-*`, `--font-size-*`, etc.) to keep older pages working
 
 ## Dev Setup Notes
 
