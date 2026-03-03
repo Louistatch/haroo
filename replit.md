@@ -57,16 +57,20 @@ frontend/                 # React + TypeScript frontend
       auth.ts             # Axios client + all auth/user API calls
       payments.ts         # Payment API calls
       purchases.ts        # Purchase history API calls
+      missions.ts         # Mission CRUD API calls
+      twoFactor.ts        # 2FA setup/enable/disable/status API calls
     pages/
       Landing.tsx         # Public landing page
-      Login.tsx           # Phone number login (green split-screen)
-      Register.tsx        # Account registration (purple 3-step wizard)
+      Login.tsx           # Email login + Google OAuth (green split-screen, Neon Auth)
+      Register.tsx        # Account registration (2-step wizard: user type + email/password)
       Home.tsx            # Post-login hub: real purchase count, user stats, quick actions by type
       Dashboard.tsx       # Redirects to /home (alias)
       Documents.tsx       # Browse/purchase technical documents
       Agronomists.tsx     # Agronomist directory
       PurchaseHistory.tsx # Purchase history: card grid, filters, download/regenerate (inline styles)
       Profile.tsx         # User profile: edit PATCH /users/me, change password modal
+      Missions.tsx        # Mission management: role-based (EXPLOITANT/AGRONOME), create/accept/complete
+      Security.tsx        # 2FA management: TOTP setup wizard, QR code, backup codes, disable flow
       PaymentSuccess.tsx  # Payment callback page
     components/
       Header.tsx          # Navigation header

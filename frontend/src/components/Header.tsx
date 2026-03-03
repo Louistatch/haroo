@@ -46,6 +46,7 @@ const authLinks = [
   { to: "/missions", label: "Missions" },
   { to: "/documents", label: "Documents" },
   { to: "/purchases", label: "Mes achats" },
+  { to: "/security", label: "Sécurité" },
   { to: "/me", label: "Profil" },
 ];
 
