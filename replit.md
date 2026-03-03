@@ -2,84 +2,121 @@
 
 ## Project Overview
 
-Haroo is a Django REST API backend for an intelligent agricultural platform in Togo. It manages users, agronomists, missions, payments, documents, and compliance tracking.
+Haroo is a full-stack agricultural platform for Togo. It consists of:
+- **Backend**: Django 4.2.7 REST API (port 8000, internal only)
+- **Frontend**: React + TypeScript + Vite (port 5000, public webview)
 
 ## Architecture
 
-- **Framework**: Django 4.2.7 with Django REST Framework
-- **Language**: Python 3.12
+- **Backend Framework**: Django 4.2.7 with Django REST Framework
+- **Frontend Framework**: React 18 + TypeScript + Vite 7
+- **Language**: Python 3.12 (backend), TypeScript (frontend)
 - **Database**: SQLite (dev) / PostgreSQL with PostGIS (prod)
 - **Cache**: In-memory (dev) / Redis (prod)
 - **Task Queue**: Celery with Redis broker
-- **Authentication**: Custom JWT authentication
+- **Authentication**: Custom JWT tokens (access + refresh), phone-based (+228 Togo)
 - **Storage**: Local (dev) / AWS S3 or Cloudinary (prod)
+- **Payments**: Fedapay mobile payment gateway
+
+## Workflows
+
+- **Backend**: `DJANGO_SETTINGS_MODULE=haroo.settings.dev python3 manage.py runserver 127.0.0.1:8000`
+- **Frontend**: `cd frontend && npx vite --port 5000 --host 0.0.0.0`
+
+## Frontend → Backend Integration
+
+Vite dev server proxies all `/api/*` requests to `http://127.0.0.1:8000`.
+All API calls in the frontend use relative paths `/api/v1/...` — no hardcoded URLs.
 
 ## Project Structure
 
 ```
-haroo/                  # Django project config
+haroo/                    # Django project config
   settings/
-    base.py             # Shared settings
-    dev.py              # Development settings (SQLite, in-memory cache)
-    prod.py             # Production settings
-    staging.py          # Staging settings
-  urls.py               # Root URL configuration
-  celery.py             # Celery configuration
+    base.py               # Shared settings
+    dev.py                # Development settings (SQLite, in-memory cache)
+    prod.py               # Production settings
+  urls.py                 # Root URL config
+  celery.py               # Celery config
+  wsgi.py                 # WSGI entry point
 
-apps/                   # Django applications
-  core/                 # Core utilities and shared models
-  users/                # User authentication, profiles, agronomists
-  locations/            # Geographic data management
-  documents/            # Technical document management
-  payments/             # Payment processing (Fedapay)
-  missions/             # Mission/task management
-  institutional/        # Institutional management
-  compliance/           # Regulatory compliance
-  ratings/              # User rating system
+apps/                     # Django applications
+  core/                   # Core utilities
+  users/                  # Auth, user profiles, agronomists
+  locations/              # Geographic data
+  documents/              # Technical document management
+  payments/               # Fedapay payment processing
+  missions/               # Mission/task management
+  institutional/          # Institutional management
+  compliance/             # Regulatory compliance
+  ratings/                # User rating system
 
-templates/              # Email templates
-requirements/
-  base.txt              # Core dependencies
-  dev.txt               # Development dependencies
-  prod.txt              # Production dependencies
+frontend/                 # React + TypeScript frontend
+  src/
+    api/
+      auth.ts             # Axios client + all auth/user API calls
+      payments.ts         # Payment API calls
+      purchases.ts        # Purchase history API calls
+    pages/
+      Landing.tsx         # Public landing page
+      Login.tsx           # Phone number login
+      Register.tsx        # Account registration
+      Dashboard.tsx       # Authenticated user dashboard
+      Documents.tsx       # Browse/purchase technical documents
+      Agronomists.tsx     # Agronomist directory
+      PurchaseHistory.tsx # Purchase history + download
+      Profile.tsx         # User profile management
+      PaymentSuccess.tsx  # Payment callback page
+    components/
+      Header.tsx          # Navigation header
+      ProtectedRoute.tsx  # Auth guard for routes
+      PurchaseModal.tsx   # Document purchase confirmation
+      Toast.tsx           # Notification toasts
+    styles/               # Component-specific CSS files
+  vite.config.ts          # Vite config: port 5000, proxy /api → backend
 ```
 
-## API Endpoints
+## API Endpoints (all prefixed with /api/v1/)
 
-All API endpoints are prefixed with `/api/v1/`. Access requires JWT authentication.
-
-- `/admin/` - Django admin panel
-- `/api/v1/` - Users, auth endpoints
-- `/api/v1/locations/` - Location data
-- `/api/v1/documents/` - Document management
-- `/api/v1/payments/` - Payment endpoints
-- `/api/v1/missions/` - Mission management
-- `/api/v1/institutional/` - Institutional endpoints
-- `/api/v1/compliance/` - Compliance endpoints
-- `/api/v1/ratings/` - Rating endpoints
-
-## Running the Application
-
-Development server: `DJANGO_SETTINGS_MODULE=haroo.settings.dev python3 manage.py runserver 0.0.0.0:5000`
+- `auth/register`, `auth/login`, `auth/verify-sms` — Registration/login
+- `auth/refresh-token`, `auth/logout`, `auth/logout-all` — Token management
+- `auth/2fa/*` — Two-factor authentication (TOTP)
+- `users/me` — Profile management (GET, PATCH)
+- `agronomists/` — Public agronomist directory
+- `agronomists/register` — Agronomist registration
+- `documents/` — Technical document catalog
+- `documents/{id}/purchase` — Purchase a document
+- `purchases/history` — Purchase history
+- `payments/callback` — Fedapay payment callback
 
 ## Environment Variables
 
-Key variables set via Replit secrets/env:
-- `SECRET_KEY` - Django secret key
-- `ENCRYPTION_KEY` - AES-256 encryption key for sensitive data
-- `JWT_SECRET_KEY` - JWT signing key
-- `DJANGO_SETTINGS_MODULE` - Set to `haroo.settings.dev` for development
-- `DEBUG` - True for development
-- `ALLOWED_HOSTS` - Configured for Replit domains
+- `SECRET_KEY` — Django secret key
+- `ENCRYPTION_KEY` — AES-256 encryption key for sensitive data
+- `JWT_SECRET_KEY` — JWT signing key
+- `DJANGO_SETTINGS_MODULE` — Set to `haroo.settings.dev` for development
+- `DEBUG` — True for development
+- `ALLOWED_HOSTS` — Configured for Replit domains
 
 ## Key Dependencies
 
-- `Django==4.2.7` - Web framework
-- `djangorestframework==3.14.0` - REST API
-- `djangorestframework-simplejwt==5.3.0` - JWT tokens
-- `django-cors-headers==4.3.1` - CORS handling
-- `celery==5.3.4` - Async task queue
-- `fedapay` - Mobile payment gateway (Togo)
-- `bcrypt==4.1.2` - Password hashing
-- `pyotp==2.9.0` - Two-factor authentication
-- `qrcode` - QR code generation for 2FA
+### Backend
+- `Django==4.2.7`, `djangorestframework==3.14.0`
+- `djangorestframework-simplejwt==5.3.0` — JWT tokens
+- `django-cors-headers==4.3.1` — CORS handling
+- `celery==5.3.4` — Async tasks
+- `fedapay` — Mobile payment (Togo)
+- `pyotp==2.9.0` — 2FA TOTP
+- `bcrypt==4.1.2` — Password hashing
+
+### Frontend
+- `react@18`, `react-router-dom@6`, `axios`, `typescript`, `vite@7`
+
+## Dev Setup Notes
+
+- CORS: `CORS_ALLOW_ALL_ORIGINS = True` in dev.py
+- Database: SQLite at `db.sqlite3`
+- Admin: Django admin at `/admin/` (create superuser with `python manage.py createsuperuser`)
+- Phone format: `+228XXXXXXXX` (Togolese numbers only)
+- Auth: JWT tokens stored in `localStorage` (access_token, refresh_token)
+- Token refresh: Automatic via axios interceptor in `src/api/auth.ts`

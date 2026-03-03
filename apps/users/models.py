@@ -320,50 +320,6 @@ class FarmVerificationDocument(models.Model):
     def __str__(self):
         return f"{self.get_type_document_display()} - {self.exploitant_profile.user.username}"
 
-    class FarmVerificationDocument(models.Model):
-        """
-        Documents justificatifs pour la vérification des exploitations
-        Exigences: 10.3, 31.1, 31.3
-        """
-        TYPE_DOCUMENT_CHOICES = [
-            ('TITRE_FONCIER', 'Titre Foncier'),
-            ('CERTIFICAT_EXPLOITATION', 'Certificat d\'Exploitation'),
-            ('PHOTO_AERIENNE', 'Photo Aérienne'),
-            ('AUTRE', 'Autre'),
-        ]
-
-        exploitant_profile = models.ForeignKey(
-            ExploitantProfile,
-            on_delete=models.CASCADE,
-            related_name='documents_verification',
-            verbose_name="Profil exploitant"
-        )
-        type_document = models.CharField(
-            max_length=30,
-            choices=TYPE_DOCUMENT_CHOICES,
-            verbose_name="Type de document"
-        )
-        fichier = models.FileField(
-            upload_to='farms/verification/',
-            verbose_name="Fichier"
-        )
-        nom_fichier = models.CharField(
-            max_length=255,
-            verbose_name="Nom du fichier"
-        )
-        uploaded_at = models.DateTimeField(
-            auto_now_add=True,
-            verbose_name="Date d'upload"
-        )
-
-        class Meta:
-            verbose_name = "Document de Vérification d'Exploitation"
-            verbose_name_plural = "Documents de Vérification d'Exploitations"
-            ordering = ['-uploaded_at']
-
-        def __str__(self):
-            return f"{self.get_type_document_display()} - {self.exploitant_profile.user.username}"
-
 
 
 

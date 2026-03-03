@@ -1,49 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import { Link, useNavigate } from 'react-router-dom';
+import { me } from '../api/auth';
 import '../styles/dashboard.css';
 
-interface DashboardData {
-  user: {
-    first_name: string;
-    last_name: string;
-    user_type: string;
-  };
-  profile: {
-    superficie_totale?: string;
-    cultures_actuelles?: string[];
-    statut_verification?: string;
-    note_moyenne?: string;
-    nombre_avis?: number;
-  };
-  stats: {
-    missions_actives: number;
-    missions_terminees: number;
-    documents_achetes: number;
-    montant_depense: string;
-  };
-}
-
 export default function Dashboard() {
-  const [data, setData] = useState<DashboardData | null>(null);
+  const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    fetchDashboardData();
-  }, []);
-
-  const fetchDashboardData = async () => {
-    try {
-      const token = localStorage.getItem('access_token');
-      const response = await axios.get('http://localhost:8000/api/v1/users/me', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setData(response.data);
-    } catch (error) {
-      console.error('Erreur lors du chargement du dashboard:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    me()
+      .then(setUser)
+      .catch(() => navigate('/login'))
+      .finally(() => setLoading(false));
+  }, [navigate]);
 
   if (loading) {
     return (
@@ -54,153 +24,140 @@ export default function Dashboard() {
     );
   }
 
-  if (!data) {
-    return <div className="error-message">Erreur lors du chargement des données</div>;
-  }
+  if (!user) return null;
+
+  const getUserTypeLabel = (type: string) => {
+    const types: Record<string, string> = {
+      EXPLOITANT: 'Exploitant Agricole',
+      AGRONOME: 'Agronome',
+      OUVRIER: 'Ouvrier Agricole',
+      ACHETEUR: 'Acheteur',
+      INSTITUTION: 'Institution',
+      ADMIN: 'Administrateur',
+    };
+    return types[type] || type;
+  };
+
+  const profile = user.exploitant_profile || user.agronome_profile || user.ouvrier_profile || null;
 
   return (
     <div className="dashboard-page">
       <div className="dashboard-header">
         <div className="welcome-section">
-          <h1>👋 Bienvenue, {data.user.first_name}!</h1>
+          <h1>Bienvenue, {user.first_name || user.username}!</h1>
           <p>Voici un aperçu de votre activité sur la plateforme</p>
         </div>
-        
-        {data.profile.statut_verification && (
-          <div className={`verification-badge ${data.profile.statut_verification.toLowerCase()}`}>
-            {data.profile.statut_verification === 'VERIFIE' ? '✓ Exploitant Vérifié' : 
-             data.profile.statut_verification === 'EN_ATTENTE' ? '<img src="/images/hero/farmer.jpg" alt="En attente" className="inline-icon" style={{width: 20, height: 20, borderRadius: "50%", objectFit: "cover", marginRight: 8}} /> Vérification en cours' :
-             '<img src="/images/hero/market.jpg" alt="Erreur" className="inline-icon" style={{width: 20, height: 20, borderRadius: "50%", objectFit: "cover", marginRight: 8}} /> Non vérifié'}
-          </div>
-        )}
+        <div className="user-badge">
+          <span className="badge-type">{getUserTypeLabel(user.user_type)}</span>
+          {user.phone_verified && <span className="badge-verified">✓ Téléphone vérifié</span>}
+        </div>
       </div>
 
       <div className="dashboard-grid">
-        {/* Statistiques rapides */}
         <div className="stats-row">
           <div className="stat-card green">
             <div className="stat-icon">📋</div>
             <div className="stat-content">
-              <h3>{data.stats.missions_actives}</h3>
+              <h3>0</h3>
               <p>Missions actives</p>
             </div>
           </div>
-
           <div className="stat-card blue">
-            <div className="stat-icon"><img src="/images/hero/agriculture.jpg" alt="Succès" className="inline-icon" style={{width: 20, height: 20, borderRadius: "50%", objectFit: "cover", marginRight: 8}} /></div>
+            <div className="stat-icon">✅</div>
             <div className="stat-content">
-              <h3>{data.stats.missions_terminees}</h3>
+              <h3>0</h3>
               <p>Missions terminées</p>
             </div>
           </div>
-
           <div className="stat-card orange">
-            <div className="stat-icon"><img src="/images/placeholder/document-default.jpg" alt="Document" className="inline-icon" style={{width: 24, height: 24, borderRadius: "50%", objectFit: "cover", marginRight: 8}} /></div>
+            <div className="stat-icon">📄</div>
             <div className="stat-content">
-              <h3>{data.stats.documents_achetes}</h3>
+              <h3>0</h3>
               <p>Documents achetés</p>
             </div>
           </div>
-
           <div className="stat-card purple">
-            <div className="stat-icon"><img src="/images/hero/market.jpg" alt="Prix" className="inline-icon" style={{width: 20, height: 20, borderRadius: "50%", objectFit: "cover", marginRight: 8}} /></div>
+            <div className="stat-icon">💰</div>
             <div className="stat-content">
-              <h3>{parseInt(data.stats.montant_depense).toLocaleString()} FCFA</h3>
+              <h3>0 FCFA</h3>
               <p>Total dépensé</p>
             </div>
           </div>
         </div>
 
-        {/* Informations du profil */}
         <div className="profile-section">
-          <h2><img src="/images/hero/agriculture.jpg" alt="Statistiques" className="inline-icon" style={{width: 24, height: 24, borderRadius: "50%", objectFit: "cover", marginRight: 8}} /> Votre Profil</h2>
+          <h2>👤 Votre Profil</h2>
           <div className="profile-details">
-            {data.profile.superficie_totale && (
+            <div className="detail-item">
+              <span className="label">Nom complet:</span>
+              <span className="value">{user.first_name} {user.last_name}</span>
+            </div>
+            <div className="detail-item">
+              <span className="label">Téléphone:</span>
+              <span className="value">{user.phone_number}</span>
+            </div>
+            <div className="detail-item">
+              <span className="label">Type de compte:</span>
+              <span className="value">{getUserTypeLabel(user.user_type)}</span>
+            </div>
+            {profile?.superficie_totale && (
               <div className="detail-item">
-                <span className="label"><img src="/images/cultures/mais.jpg" alt="Culture" className="inline-icon" style={{width: 24, height: 24, borderRadius: "50%", objectFit: "cover", marginRight: 8}} /> Superficie totale:</span>
-                <span className="value">{data.profile.superficie_totale} hectares</span>
+                <span className="label">Superficie totale:</span>
+                <span className="value">{profile.superficie_totale} hectares</span>
               </div>
             )}
-
-            {data.profile.cultures_actuelles && data.profile.cultures_actuelles.length > 0 && (
+            {profile?.note_moyenne !== undefined && (
               <div className="detail-item">
-                <span className="label">🌱 Cultures actuelles:</span>
-                <div className="cultures-list">
-                  {data.profile.cultures_actuelles.map((culture, index) => (
-                    <span key={index} className="culture-tag">{culture}</span>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {data.profile.note_moyenne !== undefined && (
-              <div className="detail-item">
-                <span className="label">⭐ Note moyenne:</span>
+                <span className="label">Note moyenne:</span>
                 <span className="value">
-                  {parseFloat(data.profile.note_moyenne).toFixed(1)} / 5.0
-                  {data.profile.nombre_avis && ` (${data.profile.nombre_avis} avis)`}
+                  {parseFloat(profile.note_moyenne).toFixed(1)} / 5.0
+                  {profile.nombre_avis > 0 && ` (${profile.nombre_avis} avis)`}
                 </span>
               </div>
             )}
           </div>
         </div>
 
-        {/* Actions rapides */}
         <div className="quick-actions">
           <h2>⚡ Actions rapides</h2>
           <div className="actions-grid">
-            <a href="/documents" className="action-card">
+            <Link to="/documents" className="action-card">
               <div className="action-icon">📚</div>
               <h3>Documents</h3>
               <p>Parcourir le catalogue</p>
-            </a>
-
-            <a href="/agronomists" className="action-card">
-              <div className="action-icon">👨‍<img src="/images/cultures/mais.jpg" alt="Culture" className="inline-icon" style={{width: 24, height: 24, borderRadius: "50%", objectFit: "cover", marginRight: 8}} /></div>
+            </Link>
+            <Link to="/agronomists" className="action-card">
+              <div className="action-icon">🌿</div>
               <h3>Agronomes</h3>
               <p>Trouver un expert</p>
-            </a>
-
-            <a href="/missions" className="action-card">
-              <div className="action-icon">📋</div>
-              <h3>Missions</h3>
-              <p>Gérer vos missions</p>
-            </a>
-
-            <a href="/me" className="action-card">
+            </Link>
+            <Link to="/purchases" className="action-card">
+              <div className="action-icon">🛍️</div>
+              <h3>Mes Achats</h3>
+              <p>Historique des achats</p>
+            </Link>
+            <Link to="/me" className="action-card">
               <div className="action-icon">⚙️</div>
               <h3>Profil</h3>
               <p>Modifier vos infos</p>
-            </a>
+            </Link>
           </div>
         </div>
 
-        {/* Activité récente */}
-        <div className="recent-activity">
-          <h2>📅 Activité récente</h2>
-          <div className="activity-list">
-            <div className="activity-item">
-              <div className="activity-icon"><img src="/images/placeholder/document-default.jpg" alt="Document" className="inline-icon" style={{width: 24, height: 24, borderRadius: "50%", objectFit: "cover", marginRight: 8}} /></div>
-              <div className="activity-content">
-                <p className="activity-title">Document acheté</p>
-                <p className="activity-date">Il y a 2 jours</p>
-              </div>
+        <div className="security-section">
+          <h2>🔒 Sécurité</h2>
+          <div className="security-items">
+            <div className="security-item">
+              <span className="security-label">Téléphone vérifié:</span>
+              <span className={user.phone_verified ? 'status-ok' : 'status-warn'}>
+                {user.phone_verified ? '✓ Vérifié' : '⚠ Non vérifié'}
+              </span>
             </div>
-
-            <div className="activity-item">
-              <div className="activity-icon"><img src="/images/hero/agriculture.jpg" alt="Succès" className="inline-icon" style={{width: 20, height: 20, borderRadius: "50%", objectFit: "cover", marginRight: 8}} /></div>
-              <div className="activity-content">
-                <p className="activity-title">Mission terminée</p>
-                <p className="activity-date">Il y a 5 jours</p>
-              </div>
-            </div>
-
-            <div className="activity-item">
-              <div className="activity-icon">⭐</div>
-              <div className="activity-content">
-                <p className="activity-title">Nouvel avis reçu</p>
-                <p className="activity-date">Il y a 1 semaine</p>
-              </div>
+            <div className="security-item">
+              <span className="security-label">Authentification 2FA:</span>
+              <span className={user.two_factor_enabled ? 'status-ok' : 'status-muted'}>
+                {user.two_factor_enabled ? '✓ Activée' : 'Désactivée'}
+              </span>
             </div>
           </div>
         </div>

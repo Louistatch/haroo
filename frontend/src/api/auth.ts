@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api/v1";
+const BASE_URL = "/api/v1";
 
 const api = axios.create({
   baseURL: BASE_URL,
@@ -20,9 +20,17 @@ export function setTokens(access?: string, refresh?: string) {
   if (refresh) localStorage.setItem("refresh_token", refresh);
 }
 
-export function logout() {
+export function clearTokens() {
   localStorage.removeItem("access_token");
   localStorage.removeItem("refresh_token");
+}
+
+export function isLoggedIn() {
+  return Boolean(getAccess());
+}
+
+export function logout() {
+  clearTokens();
   try {
     window.location.href = "/login";
   } catch (e) {}
@@ -103,3 +111,46 @@ export async function me() {
   const res = await api.get("/users/me");
   return res.data;
 }
+
+export async function updateProfile(data: any) {
+  const res = await api.patch("/users/me", data);
+  return res.data;
+}
+
+export async function changePassword(old_password: string, new_password: string, confirm_password: string) {
+  const res = await api.post("/users/me/change-password", { old_password, new_password, confirm_password });
+  return res.data;
+}
+
+export async function verifySms(phone_number: string, code: string) {
+  const res = await api.post("/auth/verify-sms", { phone_number, code });
+  if (res.data && res.data.tokens) {
+    setTokens(res.data.tokens.access_token, res.data.tokens.refresh_token);
+  }
+  return res.data;
+}
+
+export async function logoutApi() {
+  try {
+    const token = getAccess();
+    if (token) {
+      await api.post("/auth/logout");
+    }
+  } catch (e) {
+  } finally {
+    clearTokens();
+  }
+}
+
+export async function getAgronomists(params?: Record<string, string>) {
+  const query = params ? "?" + new URLSearchParams(params).toString() : "";
+  const res = await api.get(`/agronomists${query}`);
+  return res.data;
+}
+
+export async function getAgronomistDetail(id: number) {
+  const res = await api.get(`/agronomists/${id}`);
+  return res.data;
+}
+
+export default api;

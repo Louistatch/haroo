@@ -285,6 +285,79 @@
   font-size: 0.85rem;
 }
 
+.user-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.5rem;
+}
+
+.badge-type {
+  background: #e8f5e9;
+  color: #2e7d32;
+  padding: 0.4rem 1rem;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.badge-verified {
+  background: #e3f2fd;
+  color: #1565c0;
+  padding: 0.4rem 1rem;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.security-section {
+  background: white;
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+}
+
+.security-section h2 {
+  margin-top: 0;
+  margin-bottom: 1rem;
+  color: #333;
+}
+
+.security-items {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.security-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.security-label {
+  color: #555;
+  font-weight: 500;
+}
+
+.status-ok {
+  color: #2e7d32;
+  font-weight: 600;
+}
+
+.status-warn {
+  color: #ff6f00;
+  font-weight: 600;
+}
+
+.status-muted {
+  color: #999;
+  font-weight: 500;
+}
+
 /* Responsive */
 @media (max-width: 1024px) {
   .dashboard-header {
