@@ -14,7 +14,7 @@ Haroo is a full-stack agricultural platform for Togo. It consists of:
 - **Database**: SQLite (dev) / PostgreSQL with PostGIS (prod)
 - **Cache**: Disabled/DummyCache (dev) / Redis (prod)
 - **Task Queue**: Celery with Redis broker
-- **Authentication**: Custom JWT tokens (access + refresh), phone-based (+228 Togo)
+- **Authentication**: Neon Auth (Better Auth) for sign-in/sign-up (email + Google OAuth) → JWT exchange with Django backend via `POST /api/v1/auth/neon-exchange`; Django still issues its own access/refresh JWTs for all API calls
 - **Storage**: Local (dev) / AWS S3 or Cloudinary (prod)
 - **Payments**: Fedapay mobile payment gateway
 

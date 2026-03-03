@@ -10,6 +10,7 @@ urlpatterns = [
     # Authentification
     path('auth/register', views.register, name='register'),
     path('auth/login', views.login, name='login'),
+    path('auth/neon-exchange', views.neon_exchange, name='neon-exchange'),
     path('auth/verify-sms', views.verify_sms, name='verify-sms'),
     path('auth/resend-sms', views.resend_sms_code, name='resend-sms'),
     path('auth/refresh-token', views.refresh_token, name='refresh-token'),

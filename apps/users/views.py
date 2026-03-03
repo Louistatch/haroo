@@ -1899,3 +1899,59 @@ def get_farm_details(request, farm_id):
     }
     
     return Response(response_data, status=status.HTTP_200_OK)
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def neon_exchange(request):
+    """
+    Échange un token Neon Auth (Better Auth) contre des tokens Django JWT.
+    Crée ou synchronise l'utilisateur Django si nécessaire.
+    """
+    import uuid
+    from .neon_auth import verify_neon_session
+
+    token = request.data.get('token', '').strip()
+    user_type = request.data.get('user_type', '').strip()
+
+    if not token:
+        return Response({'detail': 'Token requis.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        neon_user = verify_neon_session(token)
+    except ValueError as e:
+        return Response({'detail': str(e)}, status=status.HTTP_401_UNAUTHORIZED)
+
+    email = neon_user['email']
+    neon_name = neon_user.get('name', '')
+    name_parts = neon_name.split(' ', 1) if neon_name else ['', '']
+    first_name = name_parts[0]
+    last_name = name_parts[1] if len(name_parts) > 1 else ''
+
+    user, created = User.objects.get_or_create(
+        email=email,
+        defaults={
+            'username': email.split('@')[0][:20] + '_' + str(uuid.uuid4())[:6],
+            'user_type': user_type,
+            'phone_verified': True,
+            'first_name': first_name,
+            'last_name': last_name,
+        }
+    )
+
+    if created:
+        if user_type:
+            user.user_type = user_type
+        user.set_unusable_password()
+        user.save()
+
+    tokens = JWTAuthService.generate_tokens(user)
+
+    return Response({
+        'tokens': {
+            'access_token': tokens['access_token'],
+            'refresh_token': tokens['refresh_token'],
+        },
+        'user': UserSerializer(user).data,
+        'created': created,
+    }, status=status.HTTP_200_OK)

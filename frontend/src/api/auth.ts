@@ -36,7 +36,6 @@ export function logout() {
   } catch (e) {}
 }
 
-// Attach access token on requests
 api.interceptors.request.use((config) => {
   const token = getAccess();
   if (token && config && config.headers) {
@@ -45,7 +44,6 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Refresh flow
 let isRefreshing = false;
 let subscribers: Array<(token: string) => void> = [];
 
@@ -66,7 +64,7 @@ api.interceptors.response.use(
     if (error.response && error.response.status === 401 && !original._retry) {
       original._retry = true;
       if (isRefreshing) {
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
           addSubscriber((token: string) => {
             original.headers.Authorization = `Bearer ${token}`;
             resolve(api(original));
@@ -94,9 +92,22 @@ api.interceptors.response.use(
   }
 );
 
-export async function login(phone: string, password: string) {
-  const res = await api.post("/auth/login", { phone_number: phone, password });
-  if (res.data && res.data.tokens) {
+export async function neonExchange(params: {
+  token: string;
+  user_type?: string;
+  first_name?: string;
+  last_name?: string;
+}) {
+  const res = await api.post("/auth/neon-exchange", params);
+  if (res.data?.tokens) {
+    setTokens(res.data.tokens.access_token, res.data.tokens.refresh_token);
+  }
+  return res.data;
+}
+
+export async function login(email: string, password: string) {
+  const res = await api.post("/auth/login", { email, password });
+  if (res.data?.tokens) {
     setTokens(res.data.tokens.access_token, res.data.tokens.refresh_token);
   }
   return res.data;
@@ -124,7 +135,7 @@ export async function changePassword(old_password: string, new_password: string,
 
 export async function verifySms(phone_number: string, code: string) {
   const res = await api.post("/auth/verify-sms", { phone_number, code });
-  if (res.data && res.data.tokens) {
+  if (res.data?.tokens) {
     setTokens(res.data.tokens.access_token, res.data.tokens.refresh_token);
   }
   return res.data;
