@@ -24,8 +24,7 @@ INSTALLED_APPS = [app for app in INSTALLED_APPS if app != 'django.contrib.gis']
 # CORS permissif en développement
 CORS_ALLOW_ALL_ORIGINS = True
 
-# Email en console pour le développement
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+# Email configuré via variables d'environnement (EMAIL_BACKEND, EMAIL_HOST, etc.)
 
 # Désactiver HTTPS en développement
 SESSION_COOKIE_SECURE = False
