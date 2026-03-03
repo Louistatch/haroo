@@ -37,6 +37,7 @@ DB_NAME = "neondb"
 DB_USER = "neondb_owner"
 DB_PORT = "5432"
 DB_SSL = "require"
+FRONTEND_URL = "https://aa624fab-cbf1-4b73-873a-27fee4a6b7ae-00-1nmp7jxwp3e9c.riker.replit.dev"
 
 [workflows]
 runButton = "Project"

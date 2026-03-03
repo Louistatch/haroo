@@ -77,13 +77,12 @@ class InitiatePaymentView(APIView):
                 reference_externe=serializer.validated_data.get('reference_externe')
             )
             
-            # Déterminer l'URL de callback
+            # Déterminer l'URL de callback (redirection frontend après paiement)
             callback_url = serializer.validated_data.get('callback_url')
             if not callback_url:
-                # URL par défaut vers notre endpoint de confirmation
-                callback_url = request.build_absolute_uri(
-                    reverse('payments:payment-callback')
-                )
+                from django.conf import settings as django_settings
+                frontend_url = getattr(django_settings, 'FRONTEND_URL', 'http://localhost:5000')
+                callback_url = f"{frontend_url.rstrip('/')}/payment/success"
             
             # Initialiser le paiement Fedapay
             fedapay_service = FedapayService()

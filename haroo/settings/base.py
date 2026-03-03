@@ -271,10 +271,13 @@ CELERY_TIMEZONE = TIME_ZONE
 
 
 # Fedapay Configuration
-FEDAPAY_API_KEY = env('FEDAPAY_API_KEY', default='')
-FEDAPAY_SECRET_KEY = env('FEDAPAY_SECRET_KEY', default='')
-FEDAPAY_ENVIRONMENT = env('FEDAPAY_ENVIRONMENT', default='sandbox')
+FEDAPAY_API_KEY        = env('FEDAPAY_API_KEY', default='')
+FEDAPAY_SECRET_KEY     = env('FEDAPAY_SECRET_KEY', default='')
+FEDAPAY_ENVIRONMENT    = env('FEDAPAY_ENVIRONMENT', default='sandbox')
 FEDAPAY_WEBHOOK_SECRET = env('FEDAPAY_WEBHOOK_SECRET', default='')
+
+# URL publique du frontend (pour les redirections FedaPay après paiement)
+FRONTEND_URL = env('FRONTEND_URL', default='http://localhost:5000')
 
 
 # SMS Gateway Configuration

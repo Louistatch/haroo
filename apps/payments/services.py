@@ -131,22 +131,50 @@ class FedapayService:
     def verify_webhook_signature(self, payload: str, signature: str) -> bool:
         """
         Vérifier la signature d'un webhook FedaPay.
-        Le header X-FEDAPAY-SIGNATURE a le format: t=<timestamp>,s=<hmac>
-        La signature est calculée sur str(timestamp) + '.' + payload.
+        Format du header X-FEDAPAY-SIGNATURE: t=<timestamp>,s=<hmac_sha256>
+        La signature HMAC est calculée sur str(timestamp) + '.' + payload.
+        Tolérance : 300 secondes.
         """
-        try:
-            from fedapay import WebhookSignature
-            from fedapay._error import SignatureVerificationError
+        import hmac
+        import hashlib
+        import time
 
+        try:
             if not settings.FEDAPAY_WEBHOOK_SECRET:
-                logger.warning("FEDAPAY_WEBHOOK_SECRET non configuré — vérification ignorée")
+                logger.warning("FEDAPAY_WEBHOOK_SECRET absent — vérification ignorée en dev")
                 return True
 
-            WebhookSignature.verify_header(payload, signature, settings.FEDAPAY_WEBHOOK_SECRET)
-            return True
+            # Extraire t= et s= du header
+            parts = {
+                kv.split('=', 1)[0]: kv.split('=', 1)[1]
+                for kv in signature.split(',')
+                if '=' in kv
+            }
+            timestamp_str = parts.get('t', '')
+            sig_received  = parts.get('s', '')
+
+            if not timestamp_str or not sig_received:
+                logger.warning("Header X-FEDAPAY-SIGNATURE malformé")
+                return False
+
+            # Vérifier la fraîcheur (±5 min)
+            ts = int(timestamp_str)
+            if abs(time.time() - ts) > 300:
+                logger.warning("Webhook FedaPay expiré (timestamp trop ancien)")
+                return False
+
+            # Recalculer la signature
+            signed_payload = f"{ts}.{payload}"
+            expected = hmac.new(
+                settings.FEDAPAY_WEBHOOK_SECRET.encode('utf-8'),
+                signed_payload.encode('utf-8'),
+                hashlib.sha256
+            ).hexdigest()
+
+            return hmac.compare_digest(expected, sig_received)
 
         except Exception as e:
-            logger.warning(f"Signature webhook invalide: {e}")
+            logger.error(f"Erreur vérification signature webhook: {e}")
             return False
 
 

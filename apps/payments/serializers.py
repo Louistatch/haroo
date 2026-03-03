@@ -152,22 +152,24 @@ class TransactionHistorySerializer(serializers.ModelSerializer):
 
 class WebhookPayloadSerializer(serializers.Serializer):
     """
-    Serializer pour valider les données du webhook Fedapay
+    Serializer pour valider les données du webhook FedaPay.
+    FedaPay envoie 'name' pour le type d'événement (pas 'event').
     """
     entity = serializers.DictField(required=True)
-    event = serializers.CharField(required=True)
-    
-    def validate_event(self, value):
-        """Valider que l'événement est supporté"""
-        supported_events = [
-            'transaction.approved',
-            'transaction.canceled',
-            'transaction.failed'
-        ]
-        
-        if value not in supported_events:
-            raise serializers.ValidationError(
-                f"Événement non supporté: {value}"
-            )
-        
-        return value
+    name   = serializers.CharField(required=False, allow_blank=True)
+    event  = serializers.CharField(required=False, allow_blank=True)
+
+    SUPPORTED_EVENTS = {
+        'transaction.approved',
+        'transaction.canceled',
+        'transaction.declined',
+        'transaction.failed',
+        'transaction.transferred',
+    }
+
+    def validate(self, data):
+        event_name = data.get('name') or data.get('event', '')
+        if not event_name:
+            raise serializers.ValidationError("Champ 'name' ou 'event' requis")
+        data['event'] = event_name
+        return data
