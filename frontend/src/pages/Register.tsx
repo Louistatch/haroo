@@ -1,8 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { signUp, signIn } from "../lib/auth-client";
-import { neonExchange } from "../api/auth";
+import { registerEmail } from "../api/auth";
 
 const MailIcon = () => (
   <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
@@ -127,44 +126,19 @@ export default function Register() {
     setLoading(true);
     setError("");
     try {
-      const signUpResult = await signUp.email({ email, password, name });
-
-      if (signUpResult.error) {
-        const msg = (signUpResult.error as any)?.message || "";
-        if (msg.toLowerCase().includes("already") || msg.toLowerCase().includes("existe") || msg.toLowerCase().includes("used")) {
-          setError("Cette adresse email est déjà utilisée. Essayez de vous connecter.");
-        } else {
-          setError(msg || "Inscription échouée. Vérifiez vos informations et réessayez.");
-        }
-        return;
-      }
-
-      let token: string | undefined = (signUpResult.data as any)?.session?.token;
-
-      if (!token) {
-        const signInResult = await signIn.email({ email, password });
-        if (signInResult.error) {
-          setError("Compte créé. Vérifiez votre email pour activer votre compte, puis connectez-vous.");
-          navigate("/login");
-          return;
-        }
-        token = (signInResult.data as any)?.session?.token;
-      }
-
-      if (!token) {
-        setError("Compte créé. Connectez-vous pour continuer.");
-        navigate("/login");
-        return;
-      }
-
       const nameParts = name.trim().split(" ");
       const first_name = nameParts[0] || "";
       const last_name = nameParts.slice(1).join(" ") || "";
-      await neonExchange({ token, user_type: userType, first_name, last_name });
+      await registerEmail({ first_name, last_name, email, password, password_confirm: confirm, user_type: userType });
       navigate("/home");
     } catch (err: any) {
-      const msg = err?.response?.data?.detail || err?.message || "Une erreur est survenue. Réessayez.";
-      setError(msg);
+      const data = err?.response?.data;
+      if (data) {
+        const firstError = Object.values(data).flat()[0];
+        setError(typeof firstError === "string" ? firstError : "Inscription échouée. Vérifiez vos informations.");
+      } else {
+        setError(err?.message || "Une erreur est survenue. Réessayez.");
+      }
     } finally {
       setLoading(false);
     }

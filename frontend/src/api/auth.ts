@@ -113,6 +113,29 @@ export async function login(email: string, password: string) {
   return res.data;
 }
 
+export async function loginEmail(email: string, password: string) {
+  const res = await api.post("/auth/login-email", { email, password });
+  if (res.data?.tokens) {
+    setTokens(res.data.tokens.access_token, res.data.tokens.refresh_token);
+  }
+  return res.data;
+}
+
+export async function registerEmail(params: {
+  first_name?: string;
+  last_name?: string;
+  email: string;
+  password: string;
+  password_confirm: string;
+  user_type: string;
+}) {
+  const res = await api.post("/auth/register-email", params);
+  if (res.data?.tokens) {
+    setTokens(res.data.tokens.access_token, res.data.tokens.refresh_token);
+  }
+  return res.data;
+}
+
 export async function register(payload: any) {
   const res = await api.post("/auth/register", payload);
   return res.data;

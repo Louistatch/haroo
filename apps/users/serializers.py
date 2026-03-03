@@ -119,9 +119,64 @@ class RegisterSerializer(serializers.Serializer):
         return user
 
 
+class EmailRegisterSerializer(serializers.Serializer):
+    """Inscription par email — sans numéro de téléphone (flux web)"""
+
+    first_name = serializers.CharField(max_length=150, required=False, allow_blank=True)
+    last_name = serializers.CharField(max_length=150, required=False, allow_blank=True)
+    email = serializers.EmailField(required=True)
+    password = serializers.CharField(write_only=True, required=True, style={'input_type': 'password'})
+    password_confirm = serializers.CharField(write_only=True, required=True, style={'input_type': 'password'})
+    user_type = serializers.ChoiceField(choices=User.USER_TYPE_CHOICES, required=True)
+
+    def validate_email(self, value):
+        if User.objects.filter(email=value).exists():
+            raise serializers.ValidationError("Cette adresse email est déjà utilisée.")
+        return value.lower()
+
+    def validate_password(self, value):
+        from .services import PasswordValidationService
+        result = PasswordValidationService.validate_password(value)
+        if not result['is_valid']:
+            raise serializers.ValidationError(result['errors'])
+        return value
+
+    def validate(self, attrs):
+        if attrs['password'] != attrs['password_confirm']:
+            raise serializers.ValidationError({'password_confirm': "Les mots de passe ne correspondent pas."})
+        return attrs
+
+    def create(self, validated_data):
+        import uuid
+        validated_data.pop('password_confirm')
+        password = validated_data.pop('password')
+        email = validated_data['email']
+        base = email.split('@')[0][:20]
+        username = base
+        if User.objects.filter(username=username).exists():
+            username = f"{base}_{uuid.uuid4().hex[:6]}"
+        user = User.objects.create_user(
+            username=username,
+            email=email,
+            password=password,
+            first_name=validated_data.get('first_name', ''),
+            last_name=validated_data.get('last_name', ''),
+            user_type=validated_data.get('user_type', ''),
+            phone_verified=True,
+        )
+        return user
+
+
+class EmailLoginSerializer(serializers.Serializer):
+    """Connexion par email + mot de passe (flux web)"""
+
+    email = serializers.EmailField(required=True)
+    password = serializers.CharField(write_only=True, required=True, style={'input_type': 'password'})
+
+
 class LoginSerializer(serializers.Serializer):
     """Serializer pour la connexion"""
-    
+
     phone_number = serializers.CharField(
         required=True,
         help_text="Numéro de téléphone"

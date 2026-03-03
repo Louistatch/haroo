@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { signIn } from "../lib/auth-client";
-import { neonExchange } from "../api/auth";
+import { loginEmail, neonExchange } from "../api/auth";
 
 const MailIcon = () => (
   <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
@@ -77,20 +77,15 @@ export default function Login() {
     setLoading(true);
     setError("");
     try {
-      const result = await signIn.email({ email, password });
-      if (result.error) {
-        setError(result.error.message || "Email ou mot de passe incorrect.");
-        return;
-      }
-      const token = (result.data as any)?.session?.token;
-      if (!token) {
-        setError("Impossible de récupérer la session. Réessayez.");
-        return;
-      }
-      await neonExchange({ token });
+      await loginEmail(email, password);
       navigate("/home");
     } catch (err: any) {
-      setError(err?.message || "Une erreur est survenue. Réessayez.");
+      const data = err?.response?.data;
+      if (data?.error) {
+        setError(data.error);
+      } else {
+        setError("Email ou mot de passe incorrect.");
+      }
     } finally {
       setLoading(false);
     }

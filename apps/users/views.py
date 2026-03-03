@@ -10,6 +10,8 @@ from django.views.decorators.csrf import csrf_exempt
 
 from .serializers import (
     RegisterSerializer,
+    EmailRegisterSerializer,
+    EmailLoginSerializer,
     LoginSerializer,
     VerifySMSSerializer,
     RefreshTokenSerializer,
@@ -87,6 +89,95 @@ def register(request):
             'error': 'Erreur lors de l\'inscription',
             'detail': str(e)
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def register_email(request):
+    """
+    Inscription par email + mot de passe (sans numéro de téléphone).
+    Retourne directement les tokens JWT.
+    """
+    client_ip = get_client_ip(request)
+    rate_limit = RateLimitService.check_rate_limit(client_ip, action='register')
+    if rate_limit['is_blocked']:
+        return Response({
+            'error': 'Trop de tentatives. Veuillez réessayer plus tard.',
+            'blocked_until': rate_limit.get('blocked_until')
+        }, status=status.HTTP_429_TOO_MANY_REQUESTS)
+
+    serializer = EmailRegisterSerializer(data=request.data)
+    if not serializer.is_valid():
+        RateLimitService.record_attempt(client_ip, action='register', success=False)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        user = serializer.save()
+        RateLimitService.record_attempt(client_ip, action='register', success=True)
+        tokens = JWTAuthService.generate_tokens(user)
+        return Response({
+            'tokens': {
+                'access_token': tokens['access_token'],
+                'refresh_token': tokens['refresh_token'],
+            },
+            'user': UserSerializer(user).data,
+        }, status=status.HTTP_201_CREATED)
+    except Exception as e:
+        RateLimitService.record_attempt(client_ip, action='register', success=False)
+        return Response({'error': 'Erreur lors de l\'inscription', 'detail': str(e)},
+                        status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def login_email(request):
+    """
+    Connexion par email + mot de passe.
+    Retourne les tokens JWT.
+    """
+    client_ip = get_client_ip(request)
+    rate_limit = RateLimitService.check_rate_limit(client_ip, action='login')
+    if rate_limit['is_blocked']:
+        return Response({
+            'error': 'Trop de tentatives. Veuillez réessayer plus tard.',
+            'blocked_until': rate_limit.get('blocked_until')
+        }, status=status.HTTP_429_TOO_MANY_REQUESTS)
+
+    serializer = EmailLoginSerializer(data=request.data)
+    if not serializer.is_valid():
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    email = serializer.validated_data['email'].lower()
+    password = serializer.validated_data['password']
+
+    try:
+        user = User.objects.get(email=email)
+    except User.DoesNotExist:
+        RateLimitService.record_attempt(client_ip, action='login', success=False)
+        return Response({'error': 'Email ou mot de passe incorrect.'},
+                        status=status.HTTP_401_UNAUTHORIZED)
+
+    if not user.check_password(password):
+        RateLimitService.record_attempt(client_ip, action='login', success=False)
+        remaining = RateLimitService.check_rate_limit(client_ip, action='login')
+        return Response({
+            'error': 'Email ou mot de passe incorrect.',
+            'attempts_remaining': remaining.get('attempts_remaining', 0)
+        }, status=status.HTTP_401_UNAUTHORIZED)
+
+    if not user.is_active:
+        return Response({'error': 'Ce compte est désactivé.'},
+                        status=status.HTTP_403_FORBIDDEN)
+
+    RateLimitService.record_attempt(client_ip, action='login', success=True)
+    tokens = JWTAuthService.generate_tokens(user)
+    return Response({
+        'tokens': {
+            'access_token': tokens['access_token'],
+            'refresh_token': tokens['refresh_token'],
+        },
+        'user': UserSerializer(user).data,
+    }, status=status.HTTP_200_OK)
 
 
 @api_view(['POST'])
