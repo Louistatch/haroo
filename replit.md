@@ -12,7 +12,7 @@ Haroo is a full-stack agricultural platform for Togo. It consists of:
 - **Frontend Framework**: React 18 + TypeScript + Vite 7
 - **Language**: Python 3.12 (backend), TypeScript (frontend)
 - **Database**: SQLite (dev) / PostgreSQL with PostGIS (prod)
-- **Cache**: In-memory (dev) / Redis (prod)
+- **Cache**: Disabled/DummyCache (dev) / Redis (prod)
 - **Task Queue**: Celery with Redis broker
 - **Authentication**: Custom JWT tokens (access + refresh), phone-based (+228 Togo)
 - **Storage**: Local (dev) / AWS S3 or Cloudinary (prod)
@@ -20,7 +20,7 @@ Haroo is a full-stack agricultural platform for Togo. It consists of:
 
 ## Workflows
 
-- **Backend**: `DJANGO_SETTINGS_MODULE=haroo.settings.dev python3 manage.py runserver 127.0.0.1:8000`
+- **Backend**: `DJANGO_SETTINGS_MODULE=haroo.settings.dev python3 manage.py runserver 0.0.0.0:8000 --noreload` (must bind 0.0.0.0 for Replit port detection; --noreload for faster startup)
 - **Frontend**: `cd frontend && npx vite --port 5000 --host 0.0.0.0`
 
 ## Frontend → Backend Integration
@@ -115,8 +115,11 @@ frontend/                 # React + TypeScript frontend
 ## Dev Setup Notes
 
 - CORS: `CORS_ALLOW_ALL_ORIGINS = True` in dev.py
+- Cache: `DummyCache` in dev.py (disabled to avoid stale responses after seeding)
 - Database: SQLite at `db.sqlite3`
+- Seed data: Run `python manage.py seed_data` to populate 5 regions, 11+ prefectures, 40+ cantons, 2 document templates, 12 technical documents
 - Admin: Django admin at `/admin/` (create superuser with `python manage.py createsuperuser`)
 - Phone format: `+228XXXXXXXX` (Togolese numbers only)
 - Auth: JWT tokens stored in `localStorage` (access_token, refresh_token)
 - Token refresh: Automatic via axios interceptor in `src/api/auth.ts`
+- Backend binding: Must use `0.0.0.0:8000` (not `127.0.0.1:8000`) for Replit workflow port detection to work

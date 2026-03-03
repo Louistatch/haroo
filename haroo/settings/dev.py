@@ -31,11 +31,10 @@ EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 SESSION_COOKIE_SECURE = False
 CSRF_COOKIE_SECURE = False
 
-# Utiliser le cache en mémoire au lieu de Redis en développement
+# Désactiver le cache en développement pour éviter les réponses périmées
 CACHES = {
     'default': {
-        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-        'LOCATION': 'unique-snowflake',
+        'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
     }
 }
 
