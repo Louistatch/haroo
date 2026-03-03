@@ -77,10 +77,10 @@ class FedapayService:
             fedapay_id = str(txn_data["v1/transaction"]["id"])
 
             # 2. Générer le token de paiement
+            # FedaPay renvoie {"token": "<jwt>", "url": "https://checkout.fedapay.com/..."}
             token_data = self._post(f"/transactions/{fedapay_id}/token", {})
-            token     = token_data.get("token", {})
-            token_str = token.get("token", "")
-            pay_url   = token.get("url", f"https://checkout.fedapay.com/{token_str}")
+            token_str = token_data.get("token", "")
+            pay_url   = token_data.get("url", f"https://checkout.fedapay.com/v1/checkout/{token_str}")
 
             # 3. Persister l'ID FedaPay
             transaction.fedapay_transaction_id = fedapay_id
