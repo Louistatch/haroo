@@ -32,6 +32,11 @@ JWT_SECRET_KEY = "8xGiwgFDPMpHh3XM5xmqKjOJo2_pmnLktDwb5xdaOtnJ_Tmdd9uZQuU0xDT_wh
 EMAIL_HOST = "smtp.gmail.com"
 EMAIL_PORT = "587"
 EMAIL_USE_TLS = "True"
+DB_HOST = "ep-muddy-salad-aljfiixs-pooler.c-3.eu-central-1.aws.neon.tech"
+DB_NAME = "neondb"
+DB_USER = "neondb_owner"
+DB_PORT = "5432"
+DB_SSL = "require"
 
 [workflows]
 runButton = "Project"
