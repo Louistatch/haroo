@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { signUp } from "../lib/auth-client";
+import { signUp, signIn } from "../lib/auth-client";
 import { neonExchange } from "../api/auth";
 
 const MailIcon = () => (
@@ -127,24 +127,44 @@ export default function Register() {
     setLoading(true);
     setError("");
     try {
-      const result = await signUp.email({ email, password, name });
-      if (result.error) {
-        setError(result.error.message || "Inscription échouée. Cet email est peut-être déjà utilisé.");
+      const signUpResult = await signUp.email({ email, password, name });
+
+      if (signUpResult.error) {
+        const msg = (signUpResult.error as any)?.message || "";
+        if (msg.toLowerCase().includes("already") || msg.toLowerCase().includes("existe") || msg.toLowerCase().includes("used")) {
+          setError("Cette adresse email est déjà utilisée. Essayez de vous connecter.");
+        } else {
+          setError(msg || "Inscription échouée. Vérifiez vos informations et réessayez.");
+        }
         return;
       }
-      const token = (result.data as any)?.session?.token;
+
+      let token: string | undefined = (signUpResult.data as any)?.session?.token;
+
       if (!token) {
-        setError("Compte créé mais impossible d'ouvrir la session. Essayez de vous connecter.");
+        const signInResult = await signIn.email({ email, password });
+        if (signInResult.error) {
+          setError("Compte créé. Vérifiez votre email pour activer votre compte, puis connectez-vous.");
+          navigate("/login");
+          return;
+        }
+        token = (signInResult.data as any)?.session?.token;
+      }
+
+      if (!token) {
+        setError("Compte créé. Connectez-vous pour continuer.");
         navigate("/login");
         return;
       }
+
       const nameParts = name.trim().split(" ");
       const first_name = nameParts[0] || "";
       const last_name = nameParts.slice(1).join(" ") || "";
       await neonExchange({ token, user_type: userType, first_name, last_name });
       navigate("/home");
     } catch (err: any) {
-      setError(err?.message || "Une erreur est survenue. Réessayez.");
+      const msg = err?.response?.data?.detail || err?.message || "Une erreur est survenue. Réessayez.";
+      setError(msg);
     } finally {
       setLoading(false);
     }

@@ -1939,11 +1939,27 @@ def neon_exchange(request):
         }
     )
 
+    update_fields = []
     if created:
-        if user_type:
-            user.user_type = user_type
         user.set_unusable_password()
-        user.save()
+        update_fields.append('password')
+
+    if user_type and (created or not user.user_type):
+        user.user_type = user_type
+        update_fields.append('user_type')
+
+    first_name_param = request.data.get('first_name', '').strip()
+    last_name_param = request.data.get('last_name', '').strip()
+    if created:
+        if first_name_param and not user.first_name:
+            user.first_name = first_name_param
+            update_fields.append('first_name')
+        if last_name_param and not user.last_name:
+            user.last_name = last_name_param
+            update_fields.append('last_name')
+
+    if update_fields:
+        user.save(update_fields=update_fields)
 
     tokens = JWTAuthService.generate_tokens(user)
 
