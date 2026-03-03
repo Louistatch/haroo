@@ -1,9 +1,8 @@
 """
-Services pour la gestion des paiements via Fedapay
+Services pour la gestion des paiements via FedaPay (REST API directe)
 """
-import fedapay
+import requests
 from django.conf import settings
-from django.urls import reverse
 from decimal import Decimal
 from typing import Dict, Optional
 import logging
@@ -12,17 +11,35 @@ from .models import Transaction
 
 logger = logging.getLogger(__name__)
 
+FEDAPAY_SANDBOX_URL = "https://sandbox-api.fedapay.com/v1"
+FEDAPAY_LIVE_URL    = "https://api.fedapay.com/v1"
+
 
 class FedapayService:
     """
-    Service d'intégration avec l'API Fedapay pour les paiements mobiles
+    Service d'intégration avec l'API FedaPay pour les paiements mobiles (Togo/FCFA).
+    Utilise l'API REST FedaPay directement via requests.
     """
-    
+
     def __init__(self):
-        """Initialiser la configuration Fedapay"""
-        fedapay.api_key = settings.FEDAPAY_API_KEY
-        fedapay.environment = settings.FEDAPAY_ENVIRONMENT
-        
+        self.api_key = settings.FEDAPAY_API_KEY
+        env = getattr(settings, 'FEDAPAY_ENVIRONMENT', 'sandbox')
+        self.base_url = FEDAPAY_LIVE_URL if env == 'live' else FEDAPAY_SANDBOX_URL
+        self.headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json",
+        }
+
+    def _post(self, path: str, payload: dict) -> dict:
+        resp = requests.post(f"{self.base_url}{path}", json=payload, headers=self.headers, timeout=30)
+        resp.raise_for_status()
+        return resp.json()
+
+    def _get(self, path: str) -> dict:
+        resp = requests.get(f"{self.base_url}{path}", headers=self.headers, timeout=30)
+        resp.raise_for_status()
+        return resp.json()
+
     def initiate_payment(
         self,
         transaction: Transaction,
@@ -30,137 +47,106 @@ class FedapayService:
         description: str = ""
     ) -> Dict[str, any]:
         """
-        Initier un paiement via Fedapay
-        
-        Args:
-            transaction: Instance de Transaction Django
-            callback_url: URL de retour après paiement
-            description: Description du paiement
-            
-        Returns:
-            Dict contenant l'URL de redirection et les détails de la transaction Fedapay
-            
-        Raises:
-            Exception: Si l'initialisation du paiement échoue
+        Créer une transaction FedaPay et retourner l'URL de paiement.
         """
         try:
-            # Créer la transaction Fedapay
-            fedapay_transaction = fedapay.Transaction.create({
+            user = transaction.utilisateur
+            payload = {
                 "description": description or f"Paiement {transaction.get_type_transaction_display()}",
-                "amount": int(transaction.montant),  # Fedapay attend un entier (montant en centimes)
-                "currency": {
-                    "iso": "XOF"  # Franc CFA
-                },
+                "amount": int(transaction.montant),
+                "currency": {"iso": "XOF"},
                 "callback_url": callback_url,
                 "customer": {
-                    "firstname": transaction.utilisateur.first_name or "Client",
-                    "lastname": transaction.utilisateur.last_name or "Haroo",
-                    "email": transaction.utilisateur.email or f"user{transaction.utilisateur.id}@haroo.tg",
+                    "firstname": user.first_name or "Client",
+                    "lastname":  user.last_name  or "Haroo",
+                    "email":     user.email      or f"user{user.id}@haroo.tg",
                     "phone_number": {
-                        "number": transaction.utilisateur.phone_number,
-                        "country": "tg"
-                    }
+                        "number":  str(user.phone_number).replace('+', ''),
+                        "country": "tg",
+                    },
                 },
                 "custom_metadata": {
                     "transaction_id": str(transaction.id),
-                    "user_id": str(transaction.utilisateur.id),
-                    "type": transaction.type_transaction
-                }
-            })
-            
-            # Mettre à jour la transaction avec l'ID Fedapay
-            transaction.fedapay_transaction_id = str(fedapay_transaction.id)
+                    "user_id":        str(user.id),
+                    "type":           transaction.type_transaction,
+                },
+            }
+
+            # 1. Créer la transaction
+            txn_data = self._post("/transactions", payload)
+            fedapay_id = str(txn_data["v1/transaction"]["id"])
+
+            # 2. Générer le token de paiement
+            token_data = self._post(f"/transactions/{fedapay_id}/token", {})
+            token     = token_data.get("token", {})
+            token_str = token.get("token", "")
+            pay_url   = token.get("url", f"https://checkout.fedapay.com/{token_str}")
+
+            # 3. Persister l'ID FedaPay
+            transaction.fedapay_transaction_id = fedapay_id
             transaction.save(update_fields=['fedapay_transaction_id', 'updated_at'])
-            
-            # Générer le token de paiement
-            token = fedapay_transaction.generateToken()
-            
+
             logger.info(
-                f"Paiement Fedapay initié: transaction_id={transaction.id}, "
-                f"fedapay_id={fedapay_transaction.id}"
+                f"Paiement FedaPay initié: transaction_id={transaction.id}, fedapay_id={fedapay_id}"
             )
-            
+
             return {
                 "success": True,
-                "transaction_id": str(transaction.id),
-                "fedapay_transaction_id": str(fedapay_transaction.id),
-                "payment_url": token.url,
-                "token": token.token
+                "transaction_id":         str(transaction.id),
+                "fedapay_transaction_id": fedapay_id,
+                "payment_url":            pay_url,
+                "token":                  token_str,
             }
-            
+
         except Exception as e:
             logger.error(
-                f"Erreur lors de l'initialisation du paiement Fedapay: {str(e)}, "
-                f"transaction_id={transaction.id}"
+                f"Erreur initiation paiement FedaPay: {e}, transaction_id={transaction.id}"
             )
-            # Marquer la transaction comme échouée
             transaction.statut = 'FAILED'
             transaction.save(update_fields=['statut', 'updated_at'])
-            
-            raise Exception(f"Échec de l'initialisation du paiement: {str(e)}")
-    
+            raise Exception(f"Échec de l'initialisation du paiement: {e}")
+
     def get_transaction_status(self, fedapay_transaction_id: str) -> Dict[str, any]:
         """
-        Récupérer le statut d'une transaction Fedapay
-        
-        Args:
-            fedapay_transaction_id: ID de la transaction Fedapay
-            
-        Returns:
-            Dict contenant le statut et les détails de la transaction
+        Récupérer le statut d'une transaction FedaPay.
         """
         try:
-            fedapay_transaction = fedapay.Transaction.retrieve(fedapay_transaction_id)
-            
+            data = self._get(f"/transactions/{fedapay_transaction_id}")
+            txn  = data.get("v1/transaction", data)
             return {
-                "id": str(fedapay_transaction.id),
-                "status": fedapay_transaction.status,
-                "amount": fedapay_transaction.amount,
-                "currency": fedapay_transaction.currency.iso,
-                "description": fedapay_transaction.description,
-                "created_at": fedapay_transaction.created_at,
-                "updated_at": fedapay_transaction.updated_at
+                "id":          str(txn.get("id")),
+                "status":      txn.get("status"),
+                "amount":      txn.get("amount"),
+                "currency":    txn.get("currency", {}).get("iso", "XOF"),
+                "description": txn.get("description"),
+                "created_at":  txn.get("created_at"),
+                "updated_at":  txn.get("updated_at"),
             }
-            
         except Exception as e:
             logger.error(
-                f"Erreur lors de la récupération du statut Fedapay: {str(e)}, "
-                f"fedapay_transaction_id={fedapay_transaction_id}"
+                f"Erreur récupération statut FedaPay: {e}, id={fedapay_transaction_id}"
             )
-            raise Exception(f"Impossible de récupérer le statut de la transaction: {str(e)}")
-    
+            raise Exception(f"Impossible de récupérer le statut de la transaction: {e}")
+
     def verify_webhook_signature(self, payload: str, signature: str) -> bool:
         """
-        Vérifier la signature d'un webhook Fedapay
-        
-        Args:
-            payload: Corps de la requête webhook
-            signature: Signature fournie dans les headers (hex ou sha256=hex)
-            
-        Returns:
-            True si la signature est valide, False sinon
+        Vérifier la signature d'un webhook FedaPay.
+        Le header X-FEDAPAY-SIGNATURE a le format: t=<timestamp>,s=<hmac>
+        La signature est calculée sur str(timestamp) + '.' + payload.
         """
         try:
-            import hmac
-            import hashlib
+            from fedapay import WebhookSignature
+            from fedapay._error import SignatureVerificationError
 
             if not settings.FEDAPAY_WEBHOOK_SECRET:
-                logger.warning("FEDAPAY_WEBHOOK_SECRET non configuré — vérification ignorée en dev")
+                logger.warning("FEDAPAY_WEBHOOK_SECRET non configuré — vérification ignorée")
                 return True
 
-            expected = hmac.new(
-                settings.FEDAPAY_WEBHOOK_SECRET.encode('utf-8'),
-                payload.encode('utf-8'),
-                hashlib.sha256
-            ).hexdigest()
-
-            # FedaPay peut envoyer "sha256=<hex>" ou directement "<hex>"
-            sig = signature.removeprefix('sha256=')
-
-            return hmac.compare_digest(expected, sig)
+            WebhookSignature.verify_header(payload, signature, settings.FEDAPAY_WEBHOOK_SECRET)
+            return True
 
         except Exception as e:
-            logger.error(f"Erreur vérification signature webhook: {str(e)}")
+            logger.warning(f"Signature webhook invalide: {e}")
             return False
 
 
