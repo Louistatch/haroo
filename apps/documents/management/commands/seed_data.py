@@ -10,9 +10,28 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         self.stdout.write('Début du peuplement de la base de données...')
+        self._create_demo_users()
         self._create_locations()
         self._create_documents()
         self.stdout.write(self.style.SUCCESS('Base de données peuplée avec succès!'))
+
+    def _create_demo_users(self):
+        from apps.users.models import User
+        accounts = [
+            {'phone_number': '+22890000001', 'username': 'exploitant_demo', 'password': 'Demo123!', 'user_type': 'EXPLOITANT', 'first_name': 'Kofi', 'last_name': 'Mensah'},
+            {'phone_number': '+22890000002', 'username': 'agronome_demo',   'password': 'Demo123!', 'user_type': 'AGRONOME',   'first_name': 'Ama',  'last_name': 'Koffi'},
+            {'phone_number': '+22890000003', 'username': 'admin_demo',      'password': 'Admin123!', 'user_type': 'AGRONOME',  'first_name': 'Admin','last_name': 'Haroo', 'is_staff': True, 'is_superuser': True},
+        ]
+        for data in accounts:
+            phone = data.pop('phone_number')
+            password = data.pop('password')
+            u, created = User.objects.get_or_create(phone_number=phone, defaults=data)
+            if created:
+                u.set_password(password)
+                u.save()
+                self.stdout.write(f'  Compte demo créé: {phone}')
+            else:
+                self.stdout.write(f'  Compte demo existant: {phone}')
 
     def _create_locations(self):
         from apps.locations.models import Region, Prefecture, Canton
