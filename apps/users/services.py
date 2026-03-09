@@ -255,13 +255,13 @@ class JWTAuthService:
     @staticmethod
     def refresh_access_token(refresh_token: str) -> Optional[Dict[str, str]]:
         """
-        Génère un nouveau token d'accès à partir d'un refresh token
+        Génère un nouveau token d'accès et un nouveau refresh token (rotation)
         
         Args:
             refresh_token: Token de rafraîchissement
             
         Returns:
-            Dict avec le nouveau access_token ou None si invalide
+            Dict avec access_token, refresh_token et expires_in, ou None si invalide
         """
         payload = JWTAuthService.verify_token(refresh_token, token_type='refresh')
         
@@ -274,6 +274,7 @@ class JWTAuthService:
             
             return {
                 'access_token': tokens['access_token'],
+                'refresh_token': tokens['refresh_token'],
                 'expires_in': tokens['expires_in']
             }
         except User.DoesNotExist:

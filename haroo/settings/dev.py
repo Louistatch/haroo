@@ -10,20 +10,29 @@ DEBUG = True
 # Hosts autorisés en développement
 ALLOWED_HOSTS = ['localhost', '127.0.0.1', '0.0.0.0', '.replit.dev', '.replit.app', '.repl.co']
 
-# PostgreSQL Neon (sans PostGIS — backend standard)
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': env('DB_NAME', default='neondb'),
-        'USER': env('DB_USER', default='neondb_owner'),
-        'PASSWORD': env('DB_PASSWORD', default=''),
-        'HOST': env('DB_HOST', default='localhost'),
-        'PORT': env('DB_PORT', default='5432'),
-        'OPTIONS': {
-            'sslmode': env('DB_SSL', default='require'),
-        },
+# Base de données - SQLite pour dev local, PostgreSQL pour Replit
+if env.bool('USE_SQLITE', default=False):
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
     }
-}
+else:
+    # PostgreSQL Neon (sans PostGIS — backend standard)
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': env('DB_NAME', default='neondb'),
+            'USER': env('DB_USER', default='neondb_owner'),
+            'PASSWORD': env('DB_PASSWORD', default=''),
+            'HOST': env('DB_HOST', default='localhost'),
+            'PORT': env('DB_PORT', default='5432'),
+            'OPTIONS': {
+                'sslmode': env('DB_SSL', default='require'),
+            },
+        }
+    }
 
 # Désactiver django.contrib.gis (PostGIS non disponible sur Neon)
 INSTALLED_APPS = [app for app in INSTALLED_APPS if app != 'django.contrib.gis']

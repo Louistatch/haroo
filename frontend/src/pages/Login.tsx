@@ -1,8 +1,9 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { signIn } from "../lib/auth-client";
-import { loginEmail, neonExchange } from "../api/auth";
+import { auth, googleProvider } from "../lib/firebase";
+import { signInWithPopup } from "firebase/auth";
+import { loginEmail, firebaseExchange } from "../api/auth";
 
 const MailIcon = () => (
   <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
@@ -77,8 +78,9 @@ export default function Login() {
     setLoading(true);
     setError("");
     try {
-      await loginEmail(email, password);
-      navigate("/home");
+      const data = await loginEmail(email, password);
+      const dest = data?.user?.user_type ? "/home" : "/choose-profile";
+      navigate(dest);
     } catch (err: any) {
       const data = err?.response?.data;
       if (data?.error) {
@@ -95,9 +97,16 @@ export default function Login() {
     setLoadingGoogle(true);
     setError("");
     try {
-      await signIn.social({ provider: "google", callbackURL: "/login?oauth=1" });
+      const result = await signInWithPopup(auth, googleProvider);
+      const idToken = await result.user.getIdToken();
+      const data = await firebaseExchange(idToken);
+      const dest = data?.user?.user_type ? "/home" : "/choose-profile";
+      navigate(dest);
     } catch (err: any) {
-      setError("Connexion Google échouée. Réessayez.");
+      if (err?.code !== "auth/popup-closed-by-user") {
+        setError("Connexion Google échouée. Réessayez.");
+      }
+    } finally {
       setLoadingGoogle(false);
     }
   }
@@ -111,6 +120,9 @@ export default function Login() {
         padding: "3rem", position: "relative", overflow: "hidden",
       }} className="auth-left-panel">
 
+        {/* Real background image */}
+        <div style={{ position: "absolute", inset: 0, backgroundImage: "url('/images/hero/farmer.jpg')", backgroundSize: "cover", backgroundPosition: "center", opacity: 0.18 }} />
+        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(160deg, rgba(5,46,22,0.92) 0%, rgba(20,83,45,0.88) 50%, rgba(22,101,52,0.85) 100%)" }} />
         <div style={{ position: "absolute", inset: 0, backgroundImage: "linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px)", backgroundSize: "60px 60px" }} />
         <div style={{ position: "absolute", inset: 0, backgroundImage: "radial-gradient(circle at 30% 70%, rgba(74,222,128,0.1) 0%, transparent 50%)" }} />
 
@@ -262,6 +274,12 @@ export default function Login() {
               {loading ? "Connexion..." : "Se connecter"}
             </motion.button>
           </form>
+
+          <div style={{ display: "flex", justifyContent: "center", marginTop: "1rem" }}>
+            <Link to="/forgot-password" style={{ color: "var(--text-muted)", fontSize: "0.85rem", textDecoration: "none", fontWeight: 500 }}>
+              Mot de passe oublié ?
+            </Link>
+          </div>
 
           <p style={{ textAlign: "center", fontSize: "0.9rem", color: "var(--text-muted)", marginTop: "2rem" }}>
             Pas encore de compte ?{" "}

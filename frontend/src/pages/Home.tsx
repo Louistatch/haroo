@@ -24,7 +24,13 @@ export default function Home() {
 
   useEffect(() => {
     me()
-      .then(setUser)
+      .then((data) => {
+        if (!data.user_type) {
+          navigate("/choose-profile", { replace: true });
+          return;
+        }
+        setUser(data);
+      })
       .catch(() => navigate("/login"))
       .finally(() => setLoading(false));
   }, [navigate]);
@@ -44,6 +50,7 @@ export default function Home() {
     case "INSTITUTION":
       return <InstitutionDashboard user={user} />;
     default:
-      return <ExploitantDashboard user={user} />;
+      navigate("/choose-profile", { replace: true });
+      return null;
   }
 }

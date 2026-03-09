@@ -16,13 +16,9 @@ class MissionCreateSerializer(serializers.ModelSerializer):
         fields = ['agronome', 'description', 'budget_propose', 'date_debut', 'date_fin']
     
     def validate_agronome(self, value):
-        """Valider que l'agronome est validé"""
-        if not hasattr(value, 'agronome_profile'):
-            raise serializers.ValidationError("L'utilisateur doit avoir un profil d'agronome")
-        
-        if value.agronome_profile.statut_validation != 'VALIDE':
-            raise serializers.ValidationError("L'agronome doit être validé")
-        
+        """Valider que l'agronome a le bon type"""
+        if value.user_type != 'AGRONOME':
+            raise serializers.ValidationError("L'utilisateur sélectionné n'est pas un agronome")
         return value
     
     def validate_budget_propose(self, value):

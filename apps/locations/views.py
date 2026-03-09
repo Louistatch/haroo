@@ -131,12 +131,20 @@ class PrefectureViewSet(viewsets.ReadOnlyModelViewSet):
     
     Endpoints:
     - GET /api/v1/prefectures - Liste toutes les préfectures
+    - GET /api/v1/prefectures?region={id} - Préfectures d'une région
     - GET /api/v1/prefectures/{id} - Détails d'une préfecture
     - GET /api/v1/prefectures/{id}/cantons - Cantons d'une préfecture
     """
     queryset = Prefecture.objects.select_related('region').all()
     serializer_class = PrefectureSerializer
     permission_classes = [AllowAny]
+    
+    def get_queryset(self):
+        qs = super().get_queryset()
+        region = self.request.query_params.get('region')
+        if region:
+            qs = qs.filter(region_id=region)
+        return qs
     
     def get_serializer_class(self):
         """Utiliser le serializer détaillé pour retrieve"""
@@ -214,12 +222,20 @@ class CantonViewSet(viewsets.ReadOnlyModelViewSet):
     
     Endpoints:
     - GET /api/v1/cantons - Liste tous les cantons
+    - GET /api/v1/cantons?prefecture={id} - Cantons d'une préfecture
     - GET /api/v1/cantons/{id} - Détails d'un canton
     - GET /api/v1/cantons/search?q={query} - Recherche full-text de cantons
     """
     queryset = Canton.objects.select_related('prefecture', 'prefecture__region').all()
     serializer_class = CantonSerializer
     permission_classes = [AllowAny]
+    
+    def get_queryset(self):
+        qs = super().get_queryset()
+        prefecture = self.request.query_params.get('prefecture')
+        if prefecture:
+            qs = qs.filter(prefecture_id=prefecture)
+        return qs
     
     @action(detail=False, methods=['get'], url_path='search')
     def search(self, request):

@@ -4,6 +4,9 @@ import {
   getMissions,
   createMission,
   acceptMission,
+  refuseMission,
+  cancelMission,
+  startMission,
   completeMission,
   Mission,
   MissionCreatePayload,
@@ -181,7 +184,29 @@ function MissionCard({
   );
 }
 
-function MissionDetailPanel({ mission, onClose }: { mission: Mission; onClose: () => void }) {
+function MissionDetailPanel({ mission, userType, onClose, onAction }: { mission: Mission; userType: string; onClose: () => void; onAction: () => void }) {
+  const [actionLoading, setActionLoading] = useState("");
+
+  async function doAction(action: string) {
+    setActionLoading(action);
+    try {
+      if (action === "accept") await acceptMission(mission.id);
+      else if (action === "refuse") await refuseMission(mission.id);
+      else if (action === "cancel") await cancelMission(mission.id);
+      else if (action === "start") await startMission(mission.id);
+      else if (action === "complete") await completeMission(mission.id);
+      onAction();
+      onClose();
+    } catch {
+      // silently fail — toast handled by parent
+    } finally {
+      setActionLoading("");
+    }
+  }
+
+  const isExploitant = userType === "EXPLOITANT";
+  const isAgronome = userType === "AGRONOME";
+
   return (
     <motion.div
       initial={{ opacity: 0, x: 40 }}
@@ -189,35 +214,14 @@ function MissionDetailPanel({ mission, onClose }: { mission: Mission; onClose: (
       exit={{ opacity: 0, x: 40 }}
       transition={{ duration: 0.25 }}
       style={{
-        position: "fixed",
-        right: 0,
-        top: 0,
-        height: "100%",
-        width: "min(420px, 100vw)",
-        background: "var(--card)",
-        borderLeft: "1px solid var(--border)",
-        zIndex: 200,
-        overflowY: "auto",
-        padding: "2rem 1.75rem",
+        position: "fixed", right: 0, top: 0, height: "100%",
+        width: "min(420px, 100vw)", background: "var(--card)",
+        borderLeft: "1px solid var(--border)", zIndex: 200,
+        overflowY: "auto", padding: "2rem 1.75rem",
         boxShadow: "-8px 0 40px rgba(0,0,0,0.1)",
       }}
     >
-      <button
-        onClick={onClose}
-        style={{
-          position: "absolute",
-          top: 16,
-          right: 16,
-          background: "none",
-          border: "none",
-          cursor: "pointer",
-          color: "var(--muted)",
-          fontSize: 22,
-          lineHeight: 1,
-        }}
-      >
-        ×
-      </button>
+      <button onClick={onClose} style={{ position: "absolute", top: 16, right: 16, background: "none", border: "none", cursor: "pointer", color: "var(--muted)", fontSize: 22, lineHeight: 1 }}>×</button>
 
       <div style={{ marginBottom: "1.5rem" }}>
         <StatusBadge statut={mission.statut} />
@@ -231,31 +235,68 @@ function MissionDetailPanel({ mission, onClose }: { mission: Mission; onClose: (
 
       <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
         <Section label="Description">
-          <p style={{ color: "var(--text)", margin: 0, lineHeight: 1.7, whiteSpace: "pre-line" }}>
-            {mission.description}
-          </p>
+          <p style={{ color: "var(--text)", margin: 0, lineHeight: 1.7, whiteSpace: "pre-line" }}>{mission.description}</p>
         </Section>
-
         <Section label="Parties">
           <Row label="Exploitant" value={mission.exploitant_nom} />
           <Row label="Agronome" value={mission.agronome_nom} />
         </Section>
-
         <Section label="Financier">
           <Row label="Budget proposé" value={formatAmount(mission.budget_propose)} highlight />
+          <Row label="Commission (10%)" value={formatAmount(Number(mission.budget_propose) * 0.1)} />
+          <Row label="Net agronome" value={formatAmount(Number(mission.budget_propose) * 0.9)} highlight />
         </Section>
-
         {(mission.date_debut || mission.date_fin) && (
           <Section label="Planning">
             <Row label="Début" value={formatDate(mission.date_debut)} />
             <Row label="Fin" value={formatDate(mission.date_fin)} />
           </Section>
         )}
-
         <Section label="Référence">
           <Row label="ID mission" value={String(mission.id)} />
           <Row label="Modifié le" value={formatDate(mission.updated_at)} />
         </Section>
+      </div>
+
+      {/* Action buttons */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: "1.5rem" }}>
+        {/* Agronome: Accepter / Refuser une demande */}
+        {isAgronome && mission.statut === "DEMANDE" && (
+          <>
+            <button onClick={() => doAction("accept")} disabled={!!actionLoading}
+              style={{ width: "100%", padding: "12px", borderRadius: 12, border: "none", background: "var(--primary)", color: "#fff", fontWeight: 700, fontSize: 14, cursor: "pointer", opacity: actionLoading ? 0.6 : 1 }}>
+              {actionLoading === "accept" ? "..." : "✅ Accepter la mission"}
+            </button>
+            <button onClick={() => doAction("refuse")} disabled={!!actionLoading}
+              style={{ width: "100%", padding: "12px", borderRadius: 12, border: "1.5px solid #dc2626", background: "none", color: "#dc2626", fontWeight: 600, fontSize: 14, cursor: "pointer", opacity: actionLoading ? 0.6 : 1 }}>
+              {actionLoading === "refuse" ? "..." : "Refuser"}
+            </button>
+          </>
+        )}
+
+        {/* Exploitant/Agronome: Démarrer une mission acceptée */}
+        {mission.statut === "ACCEPTEE" && (
+          <button onClick={() => doAction("start")} disabled={!!actionLoading}
+            style={{ width: "100%", padding: "12px", borderRadius: 12, border: "none", background: "#7c3aed", color: "#fff", fontWeight: 700, fontSize: 14, cursor: "pointer", opacity: actionLoading ? 0.6 : 1 }}>
+            {actionLoading === "start" ? "..." : "🚀 Démarrer la mission"}
+          </button>
+        )}
+
+        {/* Exploitant: Terminer une mission en cours */}
+        {isExploitant && mission.statut === "EN_COURS" && (
+          <button onClick={() => doAction("complete")} disabled={!!actionLoading}
+            style={{ width: "100%", padding: "12px", borderRadius: 12, border: "none", background: "var(--primary)", color: "#fff", fontWeight: 700, fontSize: 14, cursor: "pointer", opacity: actionLoading ? 0.6 : 1 }}>
+            {actionLoading === "complete" ? "..." : "✅ Marquer comme terminée"}
+          </button>
+        )}
+
+        {/* Exploitant: Annuler (avant démarrage) */}
+        {isExploitant && ["DEMANDE", "ACCEPTEE"].includes(mission.statut) && (
+          <button onClick={() => doAction("cancel")} disabled={!!actionLoading}
+            style={{ width: "100%", padding: "12px", borderRadius: 12, border: "1.5px solid var(--border)", background: "none", color: "var(--muted)", fontWeight: 500, fontSize: 14, cursor: "pointer", opacity: actionLoading ? 0.6 : 1 }}>
+            {actionLoading === "cancel" ? "..." : "Annuler la mission"}
+          </button>
+        )}
       </div>
     </motion.div>
   );
@@ -283,7 +324,23 @@ function Row({ label, value, highlight }: { label: string; value: string; highli
   );
 }
 
-interface AgronomeOption { id: number; first_name: string; last_name: string; agronome_profile?: { specialite?: string } }
+interface AgronomeOption { id: number; user_id?: number; first_name?: string; last_name?: string; nom_complet?: string; agronome_profile?: { specialite?: string }; specialisations?: string[] }
+
+function getAgronomeDisplayName(a: AgronomeOption): string {
+  if (a.nom_complet) return a.nom_complet;
+  return [a.first_name, a.last_name].filter(Boolean).join(" ") || `Agronome #${a.id}`;
+}
+
+function getAgronomeInitial(a: AgronomeOption): string {
+  const name = getAgronomeDisplayName(a);
+  return name[0]?.toUpperCase() || "A";
+}
+
+function getAgronomeSpec(a: AgronomeOption): string {
+  if (a.agronome_profile?.specialite) return a.agronome_profile.specialite;
+  if (a.specialisations?.length) return a.specialisations.join(", ");
+  return "";
+}
 
 function CreateMissionModal({ onClose, onCreated }: { onClose: () => void; onCreated: () => void }) {
   const [step, setStep] = useState<1 | 2>(1);
@@ -304,7 +361,7 @@ function CreateMissionModal({ onClose, onCreated }: { onClose: () => void; onCre
   }, []);
 
   const filtered = agronomes.filter((a) => {
-    const name = `${a.first_name} ${a.last_name}`.toLowerCase();
+    const name = getAgronomeDisplayName(a).toLowerCase();
     return name.includes(search.toLowerCase());
   });
 
@@ -316,7 +373,7 @@ function CreateMissionModal({ onClose, onCreated }: { onClose: () => void; onCre
     setLoading(true);
     try {
       const payload: MissionCreatePayload = {
-        agronome: selected.id,
+        agronome: selected.user_id ?? selected.id,
         description: description.trim(),
         budget_propose: Number(budget),
       };
@@ -425,15 +482,15 @@ function CreateMissionModal({ onClose, onCreated }: { onClose: () => void; onCre
                       background: "var(--primary)", display: "flex", alignItems: "center", justifyContent: "center",
                       color: "#fff", fontWeight: 700, fontSize: 14, flexShrink: 0,
                     }}>
-                      {a.first_name[0]?.toUpperCase()}
+                      {getAgronomeInitial(a)}
                     </div>
                     <div>
                       <p style={{ margin: 0, fontWeight: 600, fontSize: 14, color: "var(--text)" }}>
-                        {a.first_name} {a.last_name}
+                        {getAgronomeDisplayName(a)}
                       </p>
-                      {a.agronome_profile?.specialite && (
+                      {getAgronomeSpec(a) && (
                         <p style={{ margin: 0, fontSize: 12, color: "var(--muted)" }}>
-                          {a.agronome_profile.specialite}
+                          {getAgronomeSpec(a)}
                         </p>
                       )}
                     </div>
@@ -452,7 +509,7 @@ function CreateMissionModal({ onClose, onCreated }: { onClose: () => void; onCre
                   transition: "all 0.2s",
                 }}
               >
-                Continuer {selected ? `avec ${selected.first_name}` : ""}
+                Continuer {selected ? `avec ${getAgronomeDisplayName(selected)}` : ""}
               </button>
             </motion.div>
           )}
@@ -471,11 +528,11 @@ function CreateMissionModal({ onClose, onCreated }: { onClose: () => void; onCre
                     background: "var(--primary)", display: "flex", alignItems: "center",
                     justifyContent: "center", color: "#fff", fontWeight: 700, fontSize: 13,
                   }}>
-                    {selected.first_name[0]?.toUpperCase()}
+                    {getAgronomeInitial(selected)}
                   </div>
                   <div>
                     <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: "var(--text)" }}>
-                      {selected.first_name} {selected.last_name}
+                      {getAgronomeDisplayName(selected)}
                     </p>
                     <button onClick={() => setStep(1)} style={{ background: "none", border: "none", padding: 0, fontSize: 12, color: "var(--primary)", cursor: "pointer" }}>
                       Changer
@@ -558,8 +615,8 @@ function CreateMissionModal({ onClose, onCreated }: { onClose: () => void; onCre
 }
 
 const inputStyle: React.CSSProperties = {
-  width: "100%", padding: "10px 12px", borderRadius: 10,
-  border: "1px solid var(--border)", background: "var(--bg)",
+  width: "100%", padding: "10px 14px", borderRadius: 12,
+  border: "1.5px solid var(--border)", background: "var(--bg)",
   color: "var(--text)", fontSize: 14, boxSizing: "border-box", outline: "none",
 };
 
@@ -580,6 +637,8 @@ const FILTER_TABS: { key: string; label: string }[] = [
   { key: "ACCEPTEE", label: "Acceptées" },
   { key: "EN_COURS", label: "En cours" },
   { key: "TERMINEE", label: "Terminées" },
+  { key: "REFUSEE",  label: "Refusées" },
+  { key: "ANNULEE",  label: "Annulées" },
 ];
 
 export default function Missions() {
@@ -830,7 +889,7 @@ export default function Missions() {
               onClick={() => setSelected(null)}
               style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.2)", zIndex: 199 }}
             />
-            <MissionDetailPanel mission={selected} onClose={() => setSelected(null)} />
+            <MissionDetailPanel mission={selected} userType={userType} onClose={() => setSelected(null)} onAction={load} />
           </>
         )}
       </AnimatePresence>

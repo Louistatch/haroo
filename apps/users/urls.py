@@ -13,9 +13,22 @@ urlpatterns = [
     path('auth/login', views.login, name='login'),
     path('auth/login-email', views.login_email, name='login-email'),
     path('auth/neon-exchange', views.neon_exchange, name='neon-exchange'),
+    path('auth/supabase-exchange', views.supabase_exchange, name='supabase-exchange'),
+    path('auth/firebase-exchange', views.firebase_exchange, name='firebase-exchange'),
     path('auth/verify-sms', views.verify_sms, name='verify-sms'),
     path('auth/resend-sms', views.resend_sms_code, name='resend-sms'),
     path('auth/refresh-token', views.refresh_token, name='refresh-token'),
+    
+    # Vérification email & Réinitialisation mot de passe
+    path('auth/verify-email', views.verify_email, name='verify-email'),
+    path('auth/resend-verification', views.resend_verification_email, name='resend-verification'),
+    path('auth/forgot-password', views.request_password_reset, name='forgot-password'),
+    path('auth/reset-password', views.confirm_password_reset, name='reset-password'),
+    
+    # Authentification sécurisée avec cookies HttpOnly (TASK-1.1)
+    path('auth/login-cookies', views.login_with_cookies, name='login-cookies'),
+    path('auth/refresh-cookies', views.refresh_token_with_cookies, name='refresh-cookies'),
+    path('auth/logout-cookies', views.logout_with_cookies, name='logout-cookies'),
     
     # 2FA - Exigences: 25.2
     path('auth/2fa/setup', views.setup_2fa, name='2fa-setup'),
@@ -25,6 +38,7 @@ urlpatterns = [
     path('auth/2fa/status', views.check_2fa_status, name='2fa-status'),
     
     # Profil utilisateur - Exigences: 2.5, 31.1, 31.3
+    path('auth/choose-profile', views.choose_profile, name='choose-profile'),
     path('users/me', views.manage_profile, name='manage-profile'),  # GET & PATCH
     path('users/me/change-password', views.change_password, name='change-password'),
     
@@ -58,4 +72,7 @@ urlpatterns = [
     path('farms/pending', views.get_pending_farms, name='get-pending-farms'),
     path('farms/<int:farm_id>/details', views.get_farm_details, name='get-farm-details'),
     path('farms/<int:farm_id>/verify', views.verify_farm, name='verify-farm'),
+    
+    # Liste des exploitants (pour les ouvriers)
+    path('exploitants/', views.exploitants_list, name='exploitants-list'),
 ]

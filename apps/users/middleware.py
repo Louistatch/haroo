@@ -1,5 +1,10 @@
 """
 Middleware pour le rate limiting et la sécurité
+
+Note: Le middleware RateLimitMiddleware a été remplacé par AdvancedRateLimitMiddleware
+dans apps/core/rate_limiting.py pour une meilleure performance et fonctionnalités.
+
+Cette version est conservée pour compatibilité mais n'est plus utilisée.
 """
 from django.http import JsonResponse
 from django.core.cache import cache
@@ -9,6 +14,8 @@ from datetime import datetime, timedelta
 class RateLimitMiddleware:
     """
     Middleware pour limiter le nombre de requêtes par IP
+    
+    DEPRECATED: Utilisez AdvancedRateLimitMiddleware de apps/core/rate_limiting.py
     """
     
     def __init__(self, get_response):

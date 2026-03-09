@@ -7,6 +7,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from django.contrib.auth import authenticate, get_user_model
 from django.views.decorators.csrf import csrf_exempt
+from drf_spectacular.utils import extend_schema, OpenApiResponse
 
 from .serializers import (
     RegisterSerializer,
@@ -23,6 +24,36 @@ from .services import (
     SMSVerificationService,
     JWTAuthService,
     RateLimitService
+)
+from .api_docs import (
+    register_email_schema,
+    login_email_schema,
+    login_with_cookies_schema,
+    refresh_token_schema,
+    refresh_token_with_cookies_schema,
+    logout_schema,
+    logout_with_cookies_schema,
+    logout_all_devices_schema,
+    change_password_schema,
+    setup_2fa_schema,
+    enable_2fa_schema,
+    disable_2fa_schema,
+    verify_2fa_schema,
+    check_2fa_status_schema,
+    active_sessions_schema,
+    register_agronomist_schema,
+    validate_agronomist_schema,
+    get_pending_agronomists_schema,
+    get_agronomist_details_schema,
+    agronomist_directory_schema,
+    agronomist_public_detail_schema,
+    farm_verification_request_schema,
+    farm_verification_status_schema,
+    verify_farm_schema,
+    get_pending_farms_schema,
+    get_farm_details_schema,
+    farm_premium_features_schema,
+    neon_exchange_schema,
 )
 
 User = get_user_model()
@@ -91,6 +122,7 @@ def register(request):
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
+@register_email_schema
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def register_email(request):
@@ -115,12 +147,18 @@ def register_email(request):
         user = serializer.save()
         RateLimitService.record_attempt(client_ip, action='register', success=True)
         tokens = JWTAuthService.generate_tokens(user)
+
+        # Envoyer l'email de vérification
+        from .email_service import EmailVerificationService
+        EmailVerificationService.send_verification_email(user)
+
         return Response({
             'tokens': {
                 'access_token': tokens['access_token'],
                 'refresh_token': tokens['refresh_token'],
             },
             'user': UserSerializer(user).data,
+            'email_verification_sent': True,
         }, status=status.HTTP_201_CREATED)
     except Exception as e:
         RateLimitService.record_attempt(client_ip, action='register', success=False)
@@ -128,6 +166,7 @@ def register_email(request):
                         status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
+@login_email_schema
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def login_email(request):
@@ -178,6 +217,152 @@ def login_email(request):
         },
         'user': UserSerializer(user).data,
     }, status=status.HTTP_200_OK)
+
+
+# ============================================
+# Endpoints JWT avec Cookies HttpOnly (Sécurisés)
+# TASK-1.1: Nouveaux endpoints pour sécurité renforcée
+# ============================================
+
+@login_with_cookies_schema
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def login_with_cookies(request):
+    """
+    Connexion avec tokens JWT stockés dans des cookies HttpOnly
+    
+    Plus sécurisé que localStorage (protection contre XSS)
+    """
+    client_ip = get_client_ip(request)
+    rate_limit = RateLimitService.check_rate_limit(client_ip, action='login')
+    
+    if rate_limit['is_blocked']:
+        return Response({
+            'error': 'Trop de tentatives. Veuillez réessayer plus tard.',
+            'blocked_until': rate_limit.get('blocked_until')
+        }, status=status.HTTP_429_TOO_MANY_REQUESTS)
+    
+    serializer = EmailLoginSerializer(data=request.data)
+    if not serializer.is_valid():
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    email = serializer.validated_data['email'].lower()
+    password = serializer.validated_data['password']
+    
+    try:
+        user = User.objects.get(email=email)
+    except User.DoesNotExist:
+        RateLimitService.record_attempt(client_ip, action='login', success=False)
+        return Response({'error': 'Email ou mot de passe incorrect.'},
+                        status=status.HTTP_401_UNAUTHORIZED)
+    
+    if not user.check_password(password):
+        RateLimitService.record_attempt(client_ip, action='login', success=False)
+        return Response({'error': 'Email ou mot de passe incorrect.'},
+                        status=status.HTTP_401_UNAUTHORIZED)
+    
+    if not user.is_active:
+        return Response({'error': 'Ce compte est désactivé.'},
+                        status=status.HTTP_403_FORBIDDEN)
+    
+    RateLimitService.record_attempt(client_ip, action='login', success=True)
+    tokens = JWTAuthService.generate_tokens(user)
+    
+    # Créer la réponse avec cookies HttpOnly
+    response = Response({
+        'user': UserSerializer(user).data,
+        'message': 'Connexion réussie'
+    }, status=status.HTTP_200_OK)
+    
+    # Configurer les cookies sécurisés
+    from django.conf import settings
+    
+    response.set_cookie(
+        key='access_token',
+        value=tokens['access_token'],
+        max_age=3600,  # 1 heure
+        httponly=True,
+        secure=not settings.DEBUG,  # True en production (HTTPS)
+        samesite='Lax'
+    )
+    
+    response.set_cookie(
+        key='refresh_token',
+        value=tokens['refresh_token'],
+        max_age=86400,  # 24 heures
+        httponly=True,
+        secure=not settings.DEBUG,
+        samesite='Lax'
+    )
+    
+    return response
+
+
+@refresh_token_with_cookies_schema
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def refresh_token_with_cookies(request):
+    """
+    Rafraîchit le token d'accès depuis le cookie
+    """
+    refresh_token = request.COOKIES.get('refresh_token')
+    
+    if not refresh_token:
+        return Response({'error': 'Token de rafraîchissement manquant'},
+                        status=status.HTTP_401_UNAUTHORIZED)
+    
+    result = JWTAuthService.refresh_access_token(refresh_token)
+    
+    if not result:
+        return Response({'error': 'Token invalide ou expiré'},
+                        status=status.HTTP_401_UNAUTHORIZED)
+    
+    response = Response({'message': 'Token rafraîchi'}, status=status.HTTP_200_OK)
+    
+    from django.conf import settings
+    
+    response.set_cookie(
+        key='access_token',
+        value=result['access_token'],
+        max_age=3600,
+        httponly=True,
+        secure=not settings.DEBUG,
+        samesite='Lax'
+    )
+    
+    response.set_cookie(
+        key='refresh_token',
+        value=result['refresh_token'],
+        max_age=86400,
+        httponly=True,
+        secure=not settings.DEBUG,
+        samesite='Lax'
+    )
+    
+    return response
+
+
+@logout_with_cookies_schema
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def logout_with_cookies(request):
+    """
+    Déconnexion avec suppression des cookies
+    """
+    from .session_service import SessionManagementService
+    
+    token = request.COOKIES.get('access_token')
+    
+    if token:
+        SessionManagementService.invalidate_session(request.user.id, token)
+    
+    response = Response({'message': 'Déconnexion réussie'}, status=status.HTTP_200_OK)
+    
+    # Supprimer les cookies
+    response.delete_cookie('access_token')
+    response.delete_cookie('refresh_token')
+    
+    return response
 
 
 @api_view(['POST'])
@@ -381,6 +566,7 @@ def resend_sms_code(request):
         }, status=status.HTTP_404_NOT_FOUND)
 
 
+@refresh_token_schema
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def refresh_token(request):
@@ -400,6 +586,7 @@ def refresh_token(request):
     if result:
         return Response({
             'access_token': result['access_token'],
+            'refresh_token': result['refresh_token'],
             'expires_in': result['expires_in']
         }, status=status.HTTP_200_OK)
     else:
@@ -408,6 +595,68 @@ def refresh_token(request):
         }, status=status.HTTP_401_UNAUTHORIZED)
 
 
+@extend_schema(
+    methods=['GET'],
+    summary="Obtenir le profil utilisateur",
+    description="""
+    Retourne les informations du profil de l'utilisateur connecté.
+    
+    **Header requis**: `Authorization: Bearer <access_token>`
+    """,
+    responses={
+        200: OpenApiResponse(
+            description='Profil utilisateur',
+            response={
+                'application/json': {
+                    'example': {
+                        'id': 1,
+                        'email': 'user@example.com',
+                        'first_name': 'Jean',
+                        'last_name': 'Dupont',
+                        'phone': '+22890123456',
+                        'user_type': 'EXPLOITANT',
+                        'is_active': True,
+                        'is_verified': True,
+                        'created_at': '2024-01-15T10:30:00Z'
+                    }
+                }
+            }
+        ),
+        401: OpenApiResponse(description='Non authentifié')
+    },
+    tags=['Utilisateurs']
+)
+@extend_schema(
+    methods=['PATCH'],
+    summary="Mettre à jour le profil",
+    description="""
+    Met à jour les informations du profil utilisateur.
+    
+    **Champs modifiables**:
+    - first_name, last_name
+    - phone
+    - address, city, region
+    - profile_picture (upload)
+    
+    **Header requis**: `Authorization: Bearer <access_token>`
+    """,
+    request={
+        'multipart/form-data': {
+            'example': {
+                'first_name': 'Jean',
+                'last_name': 'Dupont',
+                'phone': '+22890123456',
+                'profile_picture': '<binary>'
+            }
+        }
+    },
+    responses={
+        200: OpenApiResponse(description='Profil mis à jour'),
+        400: OpenApiResponse(description='Données invalides'),
+        401: OpenApiResponse(description='Non authentifié')
+    },
+    tags=['Utilisateurs']
+)
 @api_view(['GET', 'PATCH'])
 @permission_classes([IsAuthenticated])
 def manage_profile(request):
@@ -418,8 +667,11 @@ def manage_profile(request):
     Exigences: 2.5, 31.1, 31.3
     """
     if request.method == 'GET':
+        from .permissions import get_verification_status
         serializer = UserProfileSerializer(request.user)
-        return Response(serializer.data)
+        data = serializer.data
+        data['verification'] = get_verification_status(request.user)
+        return Response(data)
     
     elif request.method == 'PATCH':
         # Utiliser le serializer complet pour gérer les profils
@@ -440,6 +692,7 @@ def manage_profile(request):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+@change_password_schema
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def change_password(request):
@@ -474,6 +727,7 @@ def change_password(request):
 # Exigences: 25.2
 # ============================================
 
+@setup_2fa_schema
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def setup_2fa(request):
@@ -509,6 +763,7 @@ def setup_2fa(request):
     }, status=status.HTTP_200_OK)
 
 
+@enable_2fa_schema
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def enable_2fa(request):
@@ -543,6 +798,7 @@ def enable_2fa(request):
         }, status=status.HTTP_400_BAD_REQUEST)
 
 
+@disable_2fa_schema
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def disable_2fa(request):
@@ -575,6 +831,7 @@ def disable_2fa(request):
         }, status=status.HTTP_400_BAD_REQUEST)
 
 
+@verify_2fa_schema
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def verify_2fa(request):
@@ -661,6 +918,7 @@ def verify_2fa(request):
         }, status=status.HTTP_404_NOT_FOUND)
 
 
+@check_2fa_status_schema
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def check_2fa_status(request):
@@ -687,6 +945,7 @@ def check_2fa_status(request):
 # Exigences: 40.1, 40.2, 40.3, 40.4, 40.5
 # ============================================
 
+@logout_schema
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def logout(request):
@@ -722,6 +981,7 @@ def logout(request):
         }, status=status.HTTP_200_OK)
 
 
+@logout_all_devices_schema
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def logout_all_devices(request):
@@ -743,6 +1003,7 @@ def logout_all_devices(request):
     }, status=status.HTTP_200_OK)
 
 
+@active_sessions_schema
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def active_sessions(request):
@@ -774,6 +1035,7 @@ def active_sessions(request):
 # Agronomist Registration
 # ============================================
 
+@register_agronomist_schema
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def register_agronomist(request):
@@ -1032,6 +1294,7 @@ def get_agronomist_documents(request):
 
 
 
+@validate_agronomist_schema
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def validate_agronomist(request, agronomist_id):
@@ -1137,6 +1400,7 @@ def validate_agronomist(request, agronomist_id):
     return Response(response_data, status=status.HTTP_200_OK)
 
 
+@get_pending_agronomists_schema
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_pending_agronomists(request):
@@ -1164,6 +1428,7 @@ def get_pending_agronomists(request):
     }, status=status.HTTP_200_OK)
 
 
+@get_agronomist_details_schema
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_agronomist_details(request, agronomist_id):
@@ -1247,6 +1512,7 @@ def get_agronomist_details(request, agronomist_id):
     return Response(response_data, status=status.HTTP_200_OK)
 
 
+@agronomist_directory_schema
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def agronomist_directory(request):
@@ -1276,6 +1542,7 @@ def agronomist_directory(request):
     prefecture_id = request.query_params.get('prefecture')
     canton_id = request.query_params.get('canton')
     specialisation = request.query_params.get('specialisation')
+    search = request.query_params.get('search', '').strip()
     
     # Paramètres de pagination
     try:
@@ -1287,7 +1554,7 @@ def agronomist_directory(request):
         }, status=status.HTTP_400_BAD_REQUEST)
     
     # Construire la clé de cache
-    cache_key = f"agronomist_directory:region_{region_id}:prefecture_{prefecture_id}:canton_{canton_id}:spec_{specialisation}:page_{page}:size_{page_size}"
+    cache_key = f"agronomist_directory:region_{region_id}:prefecture_{prefecture_id}:canton_{canton_id}:spec_{specialisation}:search_{search}:page_{page}:size_{page_size}"
     
     # Vérifier le cache Redis (Exigence: optimiser avec cache Redis)
     cached_data = cache.get(cache_key)
@@ -1307,18 +1574,29 @@ def agronomist_directory(request):
     
     # Appliquer les filtres (Exigence: 8.1)
     if canton_id:
-        # Filtrer par canton (Exigence: 8.3)
         queryset = queryset.filter(canton_rattachement_id=canton_id)
     elif prefecture_id:
-        # Filtrer par préfecture
         queryset = queryset.filter(canton_rattachement__prefecture_id=prefecture_id)
     elif region_id:
-        # Filtrer par région
-        queryset = queryset.filter(canton_rattachement__prefecture__region_id=region_id)
+        # Supporter ID ou nom de région
+        if region_id.isdigit():
+            queryset = queryset.filter(canton_rattachement__prefecture__region_id=region_id)
+        else:
+            queryset = queryset.filter(canton_rattachement__prefecture__region__nom__iexact=region_id)
     
     # Filtrer par spécialisation (Exigence: 8.1)
     if specialisation:
         queryset = queryset.filter(specialisations__contains=[specialisation])
+    
+    # Recherche par nom ou téléphone
+    if search:
+        from django.db.models import Q
+        queryset = queryset.filter(
+            Q(user__first_name__icontains=search) |
+            Q(user__last_name__icontains=search) |
+            Q(user__phone_number__icontains=search) |
+            Q(user__username__icontains=search)
+        )
     
     # Trier par note moyenne décroissante, puis par nombre d'avis
     queryset = queryset.order_by('-note_moyenne', '-nombre_avis', 'user__first_name')
@@ -1351,6 +1629,7 @@ def agronomist_directory(request):
     return Response(response_data, status=status.HTTP_200_OK)
 
 
+@agronomist_public_detail_schema
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def agronomist_public_detail(request, agronomist_id):
@@ -1511,6 +1790,7 @@ def _can_contact_agronomist(user):
 # FARM VERIFICATION ENDPOINTS
 # ============================================
 
+@farm_verification_request_schema
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def farm_verification_request(request):
@@ -1639,6 +1919,7 @@ def farm_verification_request(request):
         )
 
 
+@farm_verification_status_schema
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def farm_verification_status(request):
@@ -1682,6 +1963,7 @@ def farm_verification_status(request):
         )
 
 
+@farm_premium_features_schema
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def farm_premium_features(request):
@@ -1768,6 +2050,7 @@ def farm_premium_features(request):
 
 
 
+@verify_farm_schema
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def verify_farm(request, farm_id):
@@ -1883,6 +2166,7 @@ def verify_farm(request, farm_id):
     return Response(response_data, status=status.HTTP_200_OK)
 
 
+@get_pending_farms_schema
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_pending_farms(request):
@@ -1910,6 +2194,7 @@ def get_pending_farms(request):
     }, status=status.HTTP_200_OK)
 
 
+@get_farm_details_schema
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_farm_details(request, farm_id):
@@ -1992,6 +2277,7 @@ def get_farm_details(request, farm_id):
     return Response(response_data, status=status.HTTP_200_OK)
 
 
+@neon_exchange_schema
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def neon_exchange(request):
@@ -2062,3 +2348,345 @@ def neon_exchange(request):
         'user': UserSerializer(user).data,
         'created': created,
     }, status=status.HTTP_200_OK)
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def supabase_exchange(request):
+    """
+    Échange un access_token Supabase Auth contre des tokens Django JWT.
+    Crée ou synchronise l'utilisateur Django si nécessaire.
+    """
+    import uuid
+    from .supabase_auth import verify_supabase_token
+
+    access_token = request.data.get('access_token', '').strip()
+    if not access_token:
+        return Response({'detail': 'access_token requis.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        supa_user = verify_supabase_token(access_token)
+    except ValueError as e:
+        return Response({'detail': str(e)}, status=status.HTTP_401_UNAUTHORIZED)
+
+    email = supa_user['email']
+    name = supa_user.get('name', '')
+    name_parts = name.split(' ', 1) if name else ['', '']
+    first_name = name_parts[0]
+    last_name = name_parts[1] if len(name_parts) > 1 else ''
+
+    user, created = User.objects.get_or_create(
+        email=email,
+        defaults={
+            'username': email.split('@')[0][:20] + '_' + str(uuid.uuid4())[:6],
+            'user_type': '',
+            'phone_verified': True,
+            'first_name': first_name,
+            'last_name': last_name,
+        }
+    )
+
+    if created:
+        user.set_unusable_password()
+        user.save(update_fields=['password'])
+
+    tokens = JWTAuthService.generate_tokens(user)
+
+    return Response({
+        'tokens': {
+            'access_token': tokens['access_token'],
+            'refresh_token': tokens['refresh_token'],
+        },
+        'user': UserSerializer(user).data,
+        'created': created,
+    }, status=status.HTTP_200_OK)
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def firebase_exchange(request):
+    """
+    Échange un ID token Firebase Auth contre des tokens Django JWT.
+    Crée ou synchronise l'utilisateur Django si nécessaire.
+    """
+    import uuid
+    from .firebase_auth import verify_firebase_token
+
+    id_token = request.data.get('id_token', '').strip()
+    if not id_token:
+        return Response({'detail': 'id_token requis.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        fb_user = verify_firebase_token(id_token)
+    except ValueError as e:
+        return Response({'detail': str(e)}, status=status.HTTP_401_UNAUTHORIZED)
+
+    email = fb_user['email']
+    name = fb_user.get('name', '')
+    name_parts = name.split(' ', 1) if name else ['', '']
+    first_name = name_parts[0]
+    last_name = name_parts[1] if len(name_parts) > 1 else ''
+
+    user, created = User.objects.get_or_create(
+        email=email,
+        defaults={
+            'username': email.split('@')[0][:20] + '_' + str(uuid.uuid4())[:6],
+            'user_type': '',
+            'phone_verified': True,
+            'first_name': first_name,
+            'last_name': last_name,
+        }
+    )
+
+    if created:
+        user.set_unusable_password()
+        user.save(update_fields=['password'])
+
+    tokens = JWTAuthService.generate_tokens(user)
+
+    return Response({
+        'tokens': {
+            'access_token': tokens['access_token'],
+            'refresh_token': tokens['refresh_token'],
+        },
+        'user': UserSerializer(user).data,
+        'created': created,
+    }, status=status.HTTP_200_OK)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def choose_profile(request):
+    """
+    Permet à un utilisateur connecté de choisir son type de profil.
+    Utilisé après la première connexion (email ou Google).
+    """
+    user_type = request.data.get('user_type', '').strip()
+    valid_types = [c[0] for c in User.USER_TYPE_CHOICES if c[0] != 'ADMIN']
+
+    if not user_type or user_type not in valid_types:
+        return Response(
+            {'error': f'Type de profil invalide. Choix possibles: {", ".join(valid_types)}'},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    user = request.user
+
+    # Ne pas permettre de changer si déjà défini
+    if user.user_type:
+        return Response(
+            {'error': 'Votre profil est déjà défini.', 'user_type': user.user_type},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    user.user_type = user_type
+    user.save(update_fields=['user_type'])
+
+    # Auto-créer le profil spécifique vide
+    if user_type == 'EXPLOITANT':
+        from .models import ExploitantProfile
+        ExploitantProfile.objects.get_or_create(
+            user=user,
+            defaults={
+                'superficie_totale': 0,
+                'coordonnees_gps': {},
+                'cultures_actuelles': [],
+            }
+        )
+    elif user_type == 'OUVRIER':
+        from .models import OuvrierProfile
+        OuvrierProfile.objects.get_or_create(user=user)
+    elif user_type == 'ACHETEUR':
+        from .models import AcheteurProfile
+        AcheteurProfile.objects.get_or_create(user=user)
+
+    # Régénérer les tokens avec le nouveau user_type
+    tokens = JWTAuthService.generate_tokens(user)
+
+    return Response({
+        'message': 'Profil choisi avec succès.',
+        'user': UserSerializer(user).data,
+        'tokens': {
+            'access_token': tokens['access_token'],
+            'refresh_token': tokens['refresh_token'],
+        },
+    }, status=status.HTTP_200_OK)
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def request_password_reset(request):
+    """
+    Demande de réinitialisation de mot de passe.
+    Envoie un email avec un lien de réinitialisation.
+    Retourne toujours 200 pour ne pas révéler si l'email existe.
+    """
+    from .email_service import PasswordResetService
+
+    email = request.data.get('email', '').strip().lower()
+    if not email:
+        return Response({'detail': 'Email requis.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    client_ip = get_client_ip(request)
+    rate_limit = RateLimitService.check_rate_limit(client_ip, action='password_reset')
+    if rate_limit['is_blocked']:
+        return Response({
+            'detail': 'Trop de tentatives. Réessayez plus tard.'
+        }, status=status.HTTP_429_TOO_MANY_REQUESTS)
+
+    try:
+        user = User.objects.get(email=email, is_active=True)
+        PasswordResetService.send_reset_email(user)
+    except User.DoesNotExist:
+        pass  # Ne pas révéler si l'email existe
+
+    RateLimitService.record_attempt(client_ip, action='password_reset', success=True)
+
+    return Response({
+        'message': 'Si un compte existe avec cet email, un lien de réinitialisation a été envoyé.'
+    }, status=status.HTTP_200_OK)
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def confirm_password_reset(request):
+    """
+    Confirme la réinitialisation du mot de passe avec le token reçu par email.
+    """
+    from .email_service import PasswordResetService
+    from .services import PasswordValidationService
+
+    token = request.data.get('token', '').strip()
+    new_password = request.data.get('new_password', '')
+    new_password_confirm = request.data.get('new_password_confirm', '')
+
+    if not token:
+        return Response({'detail': 'Token requis.'}, status=status.HTTP_400_BAD_REQUEST)
+    if not new_password:
+        return Response({'detail': 'Nouveau mot de passe requis.'}, status=status.HTTP_400_BAD_REQUEST)
+    if new_password != new_password_confirm:
+        return Response({'detail': 'Les mots de passe ne correspondent pas.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Valider la force du mot de passe
+    validation = PasswordValidationService.validate_password(new_password)
+    if not validation['is_valid']:
+        return Response({'detail': validation['errors'][0]}, status=status.HTTP_400_BAD_REQUEST)
+
+    data = PasswordResetService.consume_token(token)
+    if not data:
+        return Response({'detail': 'Lien expiré ou invalide.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        user = User.objects.get(id=data['user_id'], email=data['email'], is_active=True)
+    except User.DoesNotExist:
+        return Response({'detail': 'Utilisateur introuvable.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    user.set_password(new_password)
+    user.save(update_fields=['password'])
+
+    return Response({
+        'message': 'Mot de passe réinitialisé avec succès. Vous pouvez maintenant vous connecter.'
+    }, status=status.HTTP_200_OK)
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def verify_email(request):
+    """
+    Vérifie l'adresse email de l'utilisateur via le token reçu par email.
+    """
+    from .email_service import EmailVerificationService
+
+    token = request.data.get('token', '').strip()
+    if not token:
+        return Response({'detail': 'Token requis.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    data = EmailVerificationService.verify_token(token)
+    if not data:
+        return Response({'detail': 'Lien expiré ou invalide.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        user = User.objects.get(id=data['user_id'], email=data['email'])
+    except User.DoesNotExist:
+        return Response({'detail': 'Utilisateur introuvable.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    if user.email_verified:
+        return Response({'message': 'Email déjà vérifié.'}, status=status.HTTP_200_OK)
+
+    user.email_verified = True
+    user.save(update_fields=['email_verified'])
+
+    return Response({
+        'message': 'Adresse email vérifiée avec succès.'
+    }, status=status.HTTP_200_OK)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def resend_verification_email(request):
+    """
+    Renvoie l'email de vérification pour l'utilisateur connecté.
+    """
+    from .email_service import EmailVerificationService
+
+    user = request.user
+    if user.email_verified:
+        return Response({'message': 'Email déjà vérifié.'}, status=status.HTTP_200_OK)
+
+    client_ip = get_client_ip(request)
+    rate_limit = RateLimitService.check_rate_limit(client_ip, action='resend_verify')
+    if rate_limit['is_blocked']:
+        return Response({
+            'detail': 'Trop de tentatives. Réessayez plus tard.'
+        }, status=status.HTTP_429_TOO_MANY_REQUESTS)
+
+    sent = EmailVerificationService.send_verification_email(user)
+    RateLimitService.record_attempt(client_ip, action='resend_verify', success=sent)
+
+    if sent:
+        return Response({'message': 'Email de vérification envoyé.'}, status=status.HTTP_200_OK)
+    return Response({'detail': "Erreur lors de l'envoi."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def exploitants_list(request):
+    """
+    Liste des exploitants filtrée par zone pour les ouvriers.
+    Les ouvriers voient uniquement les exploitants des cantons où ils sont disponibles.
+    """
+    User = get_user_model()
+    user = request.user
+    
+    # Filtrer par canton pour les ouvriers
+    exploitants_qs = User.objects.filter(user_type='EXPLOITANT').select_related('exploitant_profile__canton_principal')
+    
+    if getattr(user, 'user_type', '') == 'OUVRIER':
+        try:
+            ouvrier_profile = user.ouvrier_profile
+            cantons_ids = list(ouvrier_profile.cantons_disponibles.values_list('id', flat=True))
+            if cantons_ids:
+                exploitants_qs = exploitants_qs.filter(exploitant_profile__canton_principal_id__in=cantons_ids)
+        except Exception:
+            pass
+    
+    # Sérialiser les données
+    data = []
+    for exploitant in exploitants_qs:
+        try:
+            profile = exploitant.exploitant_profile
+            data.append({
+                'id': exploitant.id,
+                'username': exploitant.username,
+                'first_name': exploitant.first_name,
+                'last_name': exploitant.last_name,
+                'phone_number': exploitant.phone_number,
+                'superficie_totale': str(profile.superficie_totale),
+                'canton_nom': profile.canton_principal.nom if profile.canton_principal else '',
+                'cultures_actuelles': profile.cultures_actuelles,
+                'statut_verification': profile.statut_verification,
+            })
+        except Exception:
+            continue
+    
+    return Response(data)

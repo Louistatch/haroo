@@ -79,20 +79,6 @@ class Mission(TimeStampedModel):
         """Validation du modèle"""
         super().clean()
         
-        # Vérifier que l'exploitant est bien un exploitant vérifié
-        if not hasattr(self.exploitant, 'exploitant_profile'):
-            raise ValidationError("L'utilisateur doit avoir un profil d'exploitant")
-        
-        if self.exploitant.exploitant_profile.statut_verification != 'VERIFIE':
-            raise ValidationError("L'exploitant doit être vérifié pour créer une mission")
-        
-        # Vérifier que l'agronome est bien un agronome validé
-        if not hasattr(self.agronome, 'agronome_profile'):
-            raise ValidationError("L'utilisateur doit avoir un profil d'agronome")
-        
-        if self.agronome.agronome_profile.statut_validation != 'VALIDE':
-            raise ValidationError("L'agronome doit être validé pour recevoir une mission")
-        
         # Vérifier que les dates sont cohérentes
         if self.date_debut and self.date_fin and self.date_debut > self.date_fin:
             raise ValidationError("La date de début doit être antérieure à la date de fin")

@@ -170,7 +170,7 @@ function CreatePreventeModal({ onClose, onCreated }: { onClose: () => void; onCr
     quantite_estimee: "",
     prix_par_tonne: "",
     date_recolte_prevue: "",
-    canton: "",
+    canton_production: "",
     description: "",
   });
   const [loading, setLoading] = useState(false);
@@ -219,7 +219,7 @@ function CreatePreventeModal({ onClose, onCreated }: { onClose: () => void; onCr
           <input required type="date" style={inputStyle} value={formData.date_recolte_prevue} onChange={e => setFormData({...formData, date_recolte_prevue: e.target.value})} />
 
           <label style={{ fontSize: 13, fontWeight: 600, display: "block", marginBottom: 4 }}>Canton (ID)</label>
-          <input required type="number" style={inputStyle} value={formData.canton} onChange={e => setFormData({...formData, canton: e.target.value})} placeholder="ID du canton" />
+          <input required type="number" style={inputStyle} value={formData.canton_production} onChange={e => setFormData({...formData, canton_production: e.target.value})} placeholder="ID du canton" />
 
           <label style={{ fontSize: 13, fontWeight: 600, display: "block", marginBottom: 4 }}>Description</label>
           <textarea style={{ ...inputStyle, height: 80 }} value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} />
@@ -321,8 +321,8 @@ export default function Presales() {
           const data = await getMesEngagements();
           setEngagements(data);
         } else {
-          const data = await getPreventes();
-          setPreventes(data.filter(p => p.exploitant_nom)); // Just placeholder filtering, backend should filter by exploitant
+          const data = await getPreventes({ mine: true });
+          setPreventes(data);
         }
       }
     } catch (err) {

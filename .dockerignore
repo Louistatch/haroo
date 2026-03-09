@@ -1,0 +1,58 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+.venv2/
+env/
+venv/
+build/
+dist/
+*.egg-info/
+*.egg
+
+# Django
+*.log
+db.sqlite3
+db.sqlite3-journal
+/media
+/staticfiles
+
+# Tests
+.pytest_cache/
+.coverage
+htmlcov/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+
+# Frontend (built separately)
+frontend/
+node_modules/
+
+# Env files (secrets injected via Railway env vars)
+.env
+.env.local
+.env.*.local
+.env.docker
+
+# Logs
+logs/
+*.log
+
+# Local/Replit
+.local/
+.replit
+.kiro/

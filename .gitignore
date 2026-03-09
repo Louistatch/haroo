@@ -26,6 +26,8 @@ env/
 ENV/
 env.bak/
 venv.bak/
+.venv/
+.venv2/
 
 # Django
 *.log
@@ -40,6 +42,8 @@ db.sqlite3-journal
 .env
 .env.local
 .env.*.local
+.env.prod
+.env.production
 
 # IDE
 .vscode/
@@ -67,3 +71,24 @@ celerybeat.pid
 # Logs
 logs/
 *.log
+
+# Node modules
+node_modules/
+frontend/node_modules/
+
+# Local/Replit state
+.local/
+
+# Temp/test scripts
+_test_*
+_check_*
+_create_*
+_list_*
+_add_*
+_setup_*
+_AI_ASSISTANT_SUMMARY.md
+_test_ai_frontend.html
+
+# Python cache
+__pycache__/
+*.pyc

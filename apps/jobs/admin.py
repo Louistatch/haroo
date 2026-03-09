@@ -21,3 +21,20 @@ class HeuresTravailleesAdmin(admin.ModelAdmin):
     list_display = ('id', 'contrat', 'date', 'heures', 'statut_validation', 'montant_calcule')
     list_filter = ('statut_validation', 'date')
     search_fields = ('contrat__ouvrier__email', 'contrat__exploitant__email')
+
+from .models import AnnonceCollective, ParticipationAnnonce
+
+
+class ParticipationInline(admin.TabularInline):
+    model = ParticipationAnnonce
+    extra = 0
+    readonly_fields = ('exploitant', 'superficie_apportee', 'created_at')
+
+
+@admin.register(AnnonceCollective)
+class AnnonceCollectiveAdmin(admin.ModelAdmin):
+    list_display = ('id', 'type_travail', 'createur', 'canton', 'superficie_cumulee', 'seuil_hectares', 'statut', 'date_expiration')
+    list_filter = ('statut', 'canton')
+    search_fields = ('type_travail', 'description', 'createur__email', 'createur__first_name')
+    inlines = [ParticipationInline]
+    readonly_fields = ('superficie_cumulee', 'offre_generee')

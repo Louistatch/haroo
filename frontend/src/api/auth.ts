@@ -77,7 +77,7 @@ api.interceptors.response.use(
         if (!refresh) throw new Error("No refresh token");
         const r = await axios.post(`${BASE_URL}/auth/refresh-token`, { refresh_token: refresh });
         const newAccess = r.data.access_token;
-        const newRefresh = r.data.refresh_token || refresh;
+        const newRefresh = r.data.refresh_token;
         setTokens(newAccess, newRefresh);
         onRefreshed(newAccess);
         return api(original);
@@ -92,21 +92,8 @@ api.interceptors.response.use(
   }
 );
 
-export async function neonExchange(params: {
-  token: string;
-  user_type?: string;
-  first_name?: string;
-  last_name?: string;
-}) {
-  const res = await api.post("/auth/neon-exchange", params);
-  if (res.data?.tokens) {
-    setTokens(res.data.tokens.access_token, res.data.tokens.refresh_token);
-  }
-  return res.data;
-}
-
-export async function login(email: string, password: string) {
-  const res = await api.post("/auth/login", { email, password });
+export async function login(phone_number: string, password: string) {
+  const res = await api.post("/auth/login", { phone_number, password });
   if (res.data?.tokens) {
     setTokens(res.data.tokens.access_token, res.data.tokens.refresh_token);
   }
@@ -168,12 +155,60 @@ export async function logoutApi() {
   try {
     const token = getAccess();
     if (token) {
-      await api.post("/auth/logout");
+      // Appel direct sans intercepteur pour éviter une boucle de refresh
+      await axios.post(`${BASE_URL}/auth/logout`, {}, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
     }
   } catch (e) {
+    // Ignorer les erreurs (token expiré, réseau, etc.)
   } finally {
     clearTokens();
   }
+}
+
+export async function forgotPassword(email: string) {
+  const res = await api.post("/auth/forgot-password", { email });
+  return res.data;
+}
+
+export async function resetPassword(token: string, new_password: string, new_password_confirm: string) {
+  const res = await api.post("/auth/reset-password", { token, new_password, new_password_confirm });
+  return res.data;
+}
+
+export async function verifyEmail(token: string) {
+  const res = await api.post("/auth/verify-email", { token });
+  return res.data;
+}
+
+export async function resendVerificationEmail() {
+  const res = await api.post("/auth/resend-verification");
+  return res.data;
+}
+
+export async function chooseProfile(user_type: string) {
+  const res = await api.post("/auth/choose-profile", { user_type });
+  if (res.data?.tokens) {
+    setTokens(res.data.tokens.access_token, res.data.tokens.refresh_token);
+  }
+  return res.data;
+}
+
+export async function supabaseExchange(access_token: string) {
+  const res = await api.post("/auth/supabase-exchange", { access_token });
+  if (res.data?.tokens) {
+    setTokens(res.data.tokens.access_token, res.data.tokens.refresh_token);
+  }
+  return res.data;
+}
+
+export async function firebaseExchange(id_token: string) {
+  const res = await api.post("/auth/firebase-exchange", { id_token });
+  if (res.data?.tokens) {
+    setTokens(res.data.tokens.access_token, res.data.tokens.refresh_token);
+  }
+  return res.data;
 }
 
 export async function getAgronomists(params?: Record<string, string>) {

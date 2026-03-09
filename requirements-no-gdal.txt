@@ -1,0 +1,79 @@
+# Django Core
+Django==4.2.7
+django-environ==0.11.2
+
+# Database
+psycopg2-binary==2.9.9
+django-redis==5.4.0
+
+# REST Framework
+djangorestframework==3.14.0
+djangorestframework-simplejwt==5.3.0
+
+# CORS
+django-cors-headers==4.3.1
+
+# Password Hashing
+bcrypt==4.1.2
+
+# Rate Limiting
+django-ratelimit==4.1.0
+
+# File Storage
+boto3==1.34.10
+django-storages==1.14.2
+
+# Excel and PDF Export
+openpyxl==3.1.2
+reportlab==4.0.7
+Pillow==10.1.0
+
+# Celery
+celery==5.3.4
+redis==5.0.1
+
+# Fedapay
+fedapay==0.3.0
+
+# WSGI Server
+gunicorn==21.2.0
+
+# Database URL parsing (Railway/Render/Heroku)
+dj-database-url==2.1.0
+
+# Static files serving
+whitenoise==6.6.0
+
+# SMS Gateway
+requests==2.31.0
+
+# Firebase Auth
+firebase-admin>=7.0.0
+
+# Other
+cloudinary==1.40.0
+cryptography==41.0.7
+django-filter==23.5
+premailer
+pyotp==2.9.0
+python-docx==1.1.0
+python-jose[cryptography]==3.3.0
+qrcode[pil]==7.4.2
+
+# Monitoring & Logging
+sentry-sdk==1.40.0
+python-json-logger==2.0.7
+
+# Testing
+pytest==7.4.3
+pytest-django==4.7.0
+pytest-cov==4.1.0
+factory-boy==3.3.0
+hypothesis==6.92.1
+
+# Code Quality
+flake8==6.1.0
+black==23.11.0
+
+# API Documentation
+drf-spectacular==0.27.0

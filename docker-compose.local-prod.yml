@@ -1,0 +1,36 @@
+# docker-compose.local-prod.yml
+# Simule la production en local (sans HTTPS)
+#
+# Usage:
+#   docker compose -f docker-compose.yml -f docker-compose.local-prod.yml --env-file .env.local-prod up --build
+#
+
+version: '3.8'
+
+services:
+  db:
+    restart: unless-stopped
+
+  redis:
+    restart: unless-stopped
+
+  backend:
+    restart: unless-stopped
+    environment:
+      DJANGO_SETTINGS_MODULE: haroo.settings.local_prod
+      DEBUG: "False"
+      CREATE_SUPERUSER: "true"
+      CSRF_TRUSTED_ORIGINS: ${CSRF_TRUSTED_ORIGINS:-http://localhost,http://localhost:5000}
+
+  celery_worker:
+    restart: unless-stopped
+    environment:
+      DJANGO_SETTINGS_MODULE: haroo.settings.local_prod
+
+  celery_beat:
+    restart: unless-stopped
+    environment:
+      DJANGO_SETTINGS_MODULE: haroo.settings.local_prod
+
+  frontend:
+    restart: unless-stopped

@@ -21,12 +21,16 @@ class SecureCloudStorage:
         Retourne le backend de stockage configuré
         
         Returns:
-            Storage: Backend de stockage (S3 ou Cloudinary)
+            Storage: Backend de stockage (Supabase, S3 ou Cloudinary)
         """
+        use_supabase = getattr(settings, 'USE_SUPABASE', False)
         use_s3 = getattr(settings, 'USE_S3', False)
         use_cloudinary = getattr(settings, 'USE_CLOUDINARY', False)
         
-        if use_s3:
+        if use_supabase:
+            from .supabase_storage import SupabaseStorage
+            return SupabaseStorage()
+        elif use_s3:
             from storages.backends.s3boto3 import S3Boto3Storage
             return S3Boto3Storage()
         elif use_cloudinary:
@@ -53,11 +57,16 @@ class SecureCloudStorage:
             
         Exigence: 31.4
         """
+        use_supabase = getattr(settings, 'USE_SUPABASE', False)
         use_s3 = getattr(settings, 'USE_S3', False)
         use_cloudinary = getattr(settings, 'USE_CLOUDINARY', False)
         
         try:
-            if use_s3:
+            if use_supabase:
+                return SecureCloudStorage._generate_supabase_signed_url(
+                    file_path, expiration_hours
+                )
+            elif use_s3:
                 return SecureCloudStorage._generate_s3_signed_url(
                     file_path, expiration_hours
                 )
@@ -75,6 +84,18 @@ class SecureCloudStorage:
             logger.error(f"Erreur génération URL signée: {e}")
             return None
     
+    @staticmethod
+    def _generate_supabase_signed_url(
+        file_path: str,
+        expiration_hours: int
+    ) -> str:
+        """
+        Génère une URL signée Supabase Storage
+        """
+        from .supabase_storage import SupabaseStorage
+        storage = SupabaseStorage()
+        return storage.generate_signed_url(file_path, expires_in=expiration_hours * 3600)
+
     @staticmethod
     def _generate_s3_signed_url(
         file_path: str,

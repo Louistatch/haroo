@@ -14,7 +14,7 @@ from .serializers import (
     NotationDetailSerializer,
     SignalementNotationSerializer
 )
-from .services import ReputationCalculator
+from .services import ReputationCalculator, ModerationService, QualityAlertService
 
 
 class NotationViewSet(viewsets.ModelViewSet):
@@ -124,3 +124,57 @@ class NotationViewSet(viewsets.ModelViewSet):
             },
             status=status.HTTP_201_CREATED
         )
+
+
+    @action(detail=False, methods=['get'], url_path='moderation-queue')
+    def moderation_queue(self, request):
+        """
+        File d'attente de modération (admin uniquement)
+        GET /api/v1/ratings/moderation-queue/
+        """
+        if not request.user.is_staff and request.user.user_type != 'ADMIN':
+            return Response({'detail': 'Accès réservé aux administrateurs.'}, status=status.HTTP_403_FORBIDDEN)
+
+        queue = ModerationService.get_moderation_queue()
+        serializer = NotationDetailSerializer(queue, many=True)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=['post'], url_path='moderate')
+    def moderate(self, request, pk=None):
+        """
+        Modérer une notation (approuver/rejeter) - admin uniquement
+        POST /api/v1/ratings/{id}/moderate/
+        Body: {"action": "approve"} ou {"action": "reject"}
+        """
+        if not request.user.is_staff and request.user.user_type != 'ADMIN':
+            return Response({'detail': 'Accès réservé aux administrateurs.'}, status=status.HTTP_403_FORBIDDEN)
+
+        notation = self.get_object()
+        action_type = request.data.get('action')
+
+        if action_type not in ('approve', 'reject'):
+            return Response({'detail': 'Action invalide. Utilisez "approve" ou "reject".'}, status=status.HTTP_400_BAD_REQUEST)
+
+        result = ModerationService.moderate_notation(notation, action_type)
+        serializer = NotationDetailSerializer(result)
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['get'], url_path='quality-alerts')
+    def quality_alerts(self, request):
+        """
+        Alertes qualité (utilisateurs avec moyenne < 2.5) - admin uniquement
+        GET /api/v1/ratings/quality-alerts/
+        """
+        if not request.user.is_staff and request.user.user_type != 'ADMIN':
+            return Response({'detail': 'Accès réservé aux administrateurs.'}, status=status.HTTP_403_FORBIDDEN)
+
+        alerts = QualityAlertService.get_users_with_quality_alerts()
+        data = [{
+            'user_id': a['user'].id,
+            'user_name': a['user'].get_full_name(),
+            'type': a['type'],
+            'note_moyenne': a['note_moyenne'],
+            'nombre_avis': a['nombre_avis']
+        } for a in alerts]
+        return Response(data)
+

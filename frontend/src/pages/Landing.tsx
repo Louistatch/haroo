@@ -142,7 +142,7 @@ const services = [
     title: "Analyses de Marché",
     desc: "Prévisions de prix, analyses de la demande et recommandations de marchés optimaux pour vos cultures.",
     cta: "Accéder aux analyses",
-    to: "/register",
+    to: "/markets",
     color: "#8b5cf6",
   },
   {
@@ -150,7 +150,7 @@ const services = [
     title: "Recrutement Agricole",
     desc: "Recrutez des ouvriers qualifiés et des experts agronomes pour vos missions et travaux saisonniers.",
     cta: "Recruter maintenant",
-    to: "/register",
+    to: "/jobs",
     color: "#f59e0b",
   },
   {
@@ -158,7 +158,7 @@ const services = [
     title: "Préventes Agricoles",
     desc: "Sécurisez vos revenus avec un système de préventes et d'acomptes garanti par la plateforme.",
     cta: "Créer une prévente",
-    to: "/register",
+    to: "/presales",
     color: "#ec4899",
   },
   {
@@ -192,6 +192,7 @@ const testimonials = [
     region: "Région des Plateaux",
     initials: "KM",
     color: "#16a34a",
+    photo: "/images/users/agronomist-1.jpg",
   },
   {
     quote: "Haroo m'a permis de trouver un agronome certifié dans ma préfecture en moins d'une heure. Le service est impressionnant.",
@@ -200,6 +201,7 @@ const testimonials = [
     region: "Région de la Kara",
     initials: "AL",
     color: "#0ea5e9",
+    photo: "/images/users/agronomist-5.jpg",
   },
   {
     quote: "Les analyses de marché m'ont aidé à choisir le bon moment pour vendre mes ignames. J'ai gagné 30% de plus cette saison.",
@@ -208,6 +210,7 @@ const testimonials = [
     region: "Région des Savanes",
     initials: "YD",
     color: "#8b5cf6",
+    photo: "/images/users/agronomist-9.jpg",
   },
 ];
 
@@ -295,6 +298,20 @@ export default function Landing() {
           paddingTop: "64px",
         }}
       >
+        {/* Image de fond réelle */}
+        <div style={{
+          position: "absolute",
+          inset: 0,
+          backgroundImage: "url('/images/hero/agriculture.jpg')",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          opacity: 0.2,
+        }} />
+        <div style={{
+          position: "absolute",
+          inset: 0,
+          background: "linear-gradient(135deg, rgba(5,46,22,0.85) 0%, rgba(20,83,45,0.8) 40%, rgba(21,128,61,0.75) 100%)",
+        }} />
         <HeroBackground />
 
         <motion.div
@@ -523,6 +540,89 @@ export default function Landing() {
         </div>
       </section>
 
+      {/* ====== CULTURES GALLERY ====== */}
+      <section style={{ padding: "5rem 0", background: "var(--bg)", overflow: "hidden" }}>
+        <div className="container">
+          <AnimatedSection style={{ textAlign: "center", marginBottom: "2.5rem" }}>
+            <span style={{
+              display: "inline-block", padding: "4px 14px", borderRadius: "100px",
+              background: "var(--primary-glow)", color: "var(--primary)",
+              fontSize: "0.75rem", fontWeight: 700, letterSpacing: "0.08em",
+              textTransform: "uppercase", marginBottom: "1rem",
+            }}>
+              Cultures du Togo
+            </span>
+            <h2 style={{ fontSize: "clamp(1.6rem, 3vw, 2.2rem)", fontWeight: 800, color: "var(--text)", letterSpacing: "-0.03em" }}>
+              Des ressources pour chaque filière
+            </h2>
+          </AnimatedSection>
+
+          <StaggerContainer
+            style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: "1rem" }}
+            staggerDelay={0.06}
+          >
+            {[
+              { name: "Maïs", img: "/images/cultures/mais.jpg", color: "#f59e0b" },
+              { name: "Riz", img: "/images/cultures/riz.jpg", color: "#16a34a" },
+              { name: "Soja", img: "/images/cultures/soja.jpg", color: "#84cc16" },
+              { name: "Tomate", img: "/images/cultures/tomate.jpg", color: "#ef4444" },
+              { name: "Manioc", img: "/images/cultures/manioc.jpg", color: "#8b5cf6" },
+              { name: "Arachide", img: "/images/cultures/arachide.jpg", color: "#d97706" },
+              { name: "Coton", img: "/images/cultures/coton.jpg", color: "#06b6d4" },
+              { name: "Oignon", img: "/images/cultures/oignon.jpg", color: "#ec4899" },
+            ].map((c) => (
+              <StaggerItem key={c.name}>
+                <motion.div
+                  whileHover={{ y: -6, boxShadow: "0 12px 32px rgba(0,0,0,0.15)" }}
+                  style={{
+                    borderRadius: "16px",
+                    overflow: "hidden",
+                    border: "1px solid var(--border)",
+                    background: "var(--surface)",
+                    cursor: "pointer",
+                  }}
+                >
+                  <div style={{ position: "relative", paddingTop: "100%", overflow: "hidden" }}>
+                    <img
+                      src={c.img}
+                      alt={c.name}
+                      loading="lazy"
+                      style={{
+                        position: "absolute",
+                        inset: 0,
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "cover",
+                        transition: "transform 0.3s ease",
+                      }}
+                      onMouseOver={(e) => (e.currentTarget.style.transform = "scale(1.08)")}
+                      onMouseOut={(e) => (e.currentTarget.style.transform = "scale(1)")}
+                    />
+                    <div style={{
+                      position: "absolute",
+                      bottom: 0,
+                      left: 0,
+                      right: 0,
+                      background: "linear-gradient(transparent, rgba(0,0,0,0.7))",
+                      padding: "2rem 0.75rem 0.75rem",
+                    }}>
+                      <span style={{
+                        color: "white",
+                        fontWeight: 700,
+                        fontSize: "0.9rem",
+                        textShadow: "0 1px 3px rgba(0,0,0,0.5)",
+                      }}>
+                        {c.name}
+                      </span>
+                    </div>
+                  </div>
+                </motion.div>
+              </StaggerItem>
+            ))}
+          </StaggerContainer>
+        </div>
+      </section>
+
       {/* ====== SERVICES ====== */}
       <section style={{ padding: "7rem 0", background: "var(--bg)" }}>
         <div className="container">
@@ -628,6 +728,325 @@ export default function Landing() {
         </div>
       </section>
 
+      {/* ====== CARTE DES MARCHÉS ====== */}
+      <section style={{ padding: "7rem 0", background: "var(--surface)", borderTop: "1px solid var(--border)" }}>
+        <div className="container">
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "4rem", alignItems: "center" }} className="markets-grid">
+            <AnimatedSection direction="left">
+              <span style={{
+                display: "inline-block", padding: "4px 14px", borderRadius: "100px",
+                background: "rgba(14,165,233,0.12)", color: "#0ea5e9",
+                fontSize: "0.75rem", fontWeight: 700, letterSpacing: "0.08em",
+                textTransform: "uppercase", marginBottom: "1.25rem",
+              }}>
+                Géolocalisation
+              </span>
+              <h2 style={{ fontSize: "clamp(1.8rem, 3.5vw, 2.5rem)", fontWeight: 800, color: "var(--text)", letterSpacing: "-0.03em", marginBottom: "1.25rem", lineHeight: 1.2 }}>
+                Marchés de proximité<br />
+                <span style={{ color: "#0ea5e9" }}>à portée de main</span>
+              </h2>
+              <p style={{ color: "var(--text-secondary)", fontSize: "1rem", lineHeight: 1.8, marginBottom: "2rem" }}>
+                Localisez les marchés agricoles les plus proches de votre exploitation. Comparez les prix, planifiez vos ventes et optimisez vos déplacements grâce à notre carte interactive.
+              </p>
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem", marginBottom: "2rem" }}>
+                {["Plus de 200 marchés référencés au Togo", "Filtrage par région et type de produit", "Itinéraires optimisés pour vos livraisons"].map((item) => (
+                  <div key={item} style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                    <span style={{ width: "22px", height: "22px", borderRadius: "50%", background: "rgba(14,165,233,0.12)", color: "#0ea5e9", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      <IconCheck />
+                    </span>
+                    <span style={{ color: "var(--text-secondary)", fontSize: "0.9rem" }}>{item}</span>
+                  </div>
+                ))}
+              </div>
+              <motion.button
+                whileHover={{ scale: 1.03, boxShadow: "0 12px 28px rgba(14,165,233,0.3)" }}
+                whileTap={{ scale: 0.97 }}
+                onClick={() => navigate("/markets")}
+                style={{
+                  background: "linear-gradient(135deg, #0ea5e9, #0284c7)",
+                  color: "white", border: "none", padding: "14px 28px",
+                  borderRadius: "14px", fontSize: "1rem", fontWeight: 700,
+                  cursor: "pointer", boxShadow: "0 6px 20px rgba(14,165,233,0.3)",
+                  display: "inline-flex", alignItems: "center", gap: "8px",
+                }}
+              >
+                <IconMapPin /> Explorer la carte
+              </motion.button>
+            </AnimatedSection>
+
+            <AnimatedSection direction="right">
+              <motion.div
+                whileHover={{ scale: 1.01 }}
+                style={{
+                  borderRadius: "20px", overflow: "hidden",
+                  boxShadow: "0 20px 60px rgba(0,0,0,0.15)",
+                  border: "1px solid var(--border)",
+                  position: "relative",
+                }}
+              >
+                <img
+                  src="/images/hero/market.jpg"
+                  alt="Marché agricole au Togo"
+                  style={{ width: "100%", height: "380px", objectFit: "cover", display: "block" }}
+                />
+                <div style={{
+                  position: "absolute", bottom: 0, left: 0, right: 0,
+                  background: "linear-gradient(transparent, rgba(0,0,0,0.75))",
+                  padding: "3rem 1.5rem 1.5rem",
+                }}>
+                  <div style={{ display: "flex", gap: "1.5rem" }}>
+                    {[["200+", "Marchés"], ["5", "Régions"], ["Temps réel", "Données"]].map(([v, l]) => (
+                      <div key={l}>
+                        <div style={{ color: "#67e8f9", fontWeight: 800, fontSize: "1.2rem" }}>{v}</div>
+                        <div style={{ color: "rgba(255,255,255,0.6)", fontSize: "0.75rem", fontWeight: 500 }}>{l}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </motion.div>
+            </AnimatedSection>
+          </div>
+        </div>
+        <style>{`@media (max-width: 768px) { .markets-grid { grid-template-columns: 1fr !important; gap: 2rem !important; } }`}</style>
+      </section>
+
+      {/* ====== DEVENIR TECHNICIEN ====== */}
+      <section style={{
+        padding: "7rem 0",
+        background: "linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4338ca 100%)",
+        position: "relative", overflow: "hidden",
+      }}>
+        <div style={{ position: "absolute", inset: 0, backgroundImage: "url('/images/hero/farmer.jpg')", backgroundSize: "cover", backgroundPosition: "center", opacity: 0.08 }} />
+        <div style={{ position: "absolute", inset: 0, backgroundImage: "linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px)", backgroundSize: "60px 60px" }} />
+        <div style={{ position: "absolute", top: "20%", left: "50%", transform: "translateX(-50%)", width: "700px", height: "500px", background: "radial-gradient(ellipse, rgba(139,92,246,0.15) 0%, transparent 70%)", pointerEvents: "none" }} />
+
+        <div className="container" style={{ position: "relative", zIndex: 1 }}>
+          <AnimatedSection style={{ textAlign: "center", marginBottom: "4rem" }}>
+            <span style={{
+              display: "inline-block", padding: "6px 16px", borderRadius: "100px",
+              background: "rgba(167,139,250,0.15)", border: "1px solid rgba(167,139,250,0.3)",
+              color: "#c4b5fd", fontSize: "0.8rem", fontWeight: 600,
+              letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: "1.5rem",
+            }}>
+              Opportunité
+            </span>
+            <h2 style={{ fontSize: "clamp(2rem, 4vw, 3rem)", fontWeight: 900, color: "white", letterSpacing: "-0.04em", marginBottom: "1.25rem", lineHeight: 1.15 }}>
+              Devenez Technicien<br />
+              <span style={{ color: "#a78bfa" }}>de la Plateforme</span>
+            </h2>
+            <p style={{ fontSize: "1.1rem", color: "rgba(255,255,255,0.65)", maxWidth: "600px", margin: "0 auto", lineHeight: 1.7 }}>
+              Vous êtes agronome ? Rejoignez notre réseau de techniciens certifiés. Partagez votre expertise, publiez des documents techniques et accompagnez les agriculteurs de votre localité.
+            </p>
+          </AnimatedSection>
+
+          <StaggerContainer
+            style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: "1.5rem", maxWidth: "900px", margin: "0 auto 3rem" }}
+            staggerDelay={0.1}
+          >
+            {[
+              {
+                step: "01",
+                title: "Inscrivez-vous",
+                desc: "Créez votre compte gratuitement et complétez votre profil agronome avec vos diplômes et spécialisations.",
+                icon: <IconUsers />,
+              },
+              {
+                step: "02",
+                title: "Demandez le statut Technicien",
+                desc: "Soumettez votre candidature avec vos justificatifs. Notre équipe valide votre profil sous 48h.",
+                icon: <IconShield />,
+              },
+              {
+                step: "03",
+                title: "Publiez & Accompagnez",
+                desc: "Uploadez des documents techniques par localité, devenez visible dans l'annuaire et recevez des missions.",
+                icon: <IconDocument />,
+              },
+            ].map((s) => (
+              <StaggerItem key={s.step}>
+                <motion.div
+                  whileHover={{ y: -6, boxShadow: "0 20px 50px rgba(0,0,0,0.3)" }}
+                  style={{
+                    background: "rgba(255,255,255,0.06)",
+                    backdropFilter: "blur(12px)",
+                    border: "1px solid rgba(255,255,255,0.1)",
+                    borderRadius: "20px",
+                    padding: "2rem",
+                    textAlign: "center",
+                  }}
+                >
+                  <div style={{
+                    width: "52px", height: "52px", borderRadius: "14px",
+                    background: "rgba(167,139,250,0.15)", border: "1px solid rgba(167,139,250,0.25)",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    color: "#a78bfa", margin: "0 auto 1.25rem",
+                  }}>
+                    {s.icon}
+                  </div>
+                  <div style={{
+                    display: "inline-block", padding: "2px 10px", borderRadius: "100px",
+                    background: "rgba(167,139,250,0.12)", color: "#c4b5fd",
+                    fontSize: "0.7rem", fontWeight: 700, letterSpacing: "0.06em",
+                    marginBottom: "0.75rem",
+                  }}>
+                    ÉTAPE {s.step}
+                  </div>
+                  <h3 style={{ color: "white", fontWeight: 700, fontSize: "1.1rem", marginBottom: "0.6rem" }}>
+                    {s.title}
+                  </h3>
+                  <p style={{ color: "rgba(255,255,255,0.55)", fontSize: "0.88rem", lineHeight: 1.6, margin: 0 }}>
+                    {s.desc}
+                  </p>
+                </motion.div>
+              </StaggerItem>
+            ))}
+          </StaggerContainer>
+
+          <AnimatedSection style={{ textAlign: "center" }}>
+            <div style={{ display: "flex", gap: "1.5rem", justifyContent: "center", flexWrap: "wrap", marginBottom: "2rem" }}>
+              {[
+                { value: "Gratuit", label: "Inscription" },
+                { value: "48h", label: "Validation" },
+                { value: "100%", label: "Visibilité" },
+                { value: "∞", label: "Documents" },
+              ].map((s) => (
+                <div key={s.label} style={{ textAlign: "center" }}>
+                  <div style={{ fontSize: "1.5rem", fontWeight: 800, color: "#a78bfa" }}>{s.value}</div>
+                  <div style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.4)", fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.06em" }}>{s.label}</div>
+                </div>
+              ))}
+            </div>
+            <motion.button
+              whileHover={{ scale: 1.03, boxShadow: "0 16px 40px rgba(139,92,246,0.4)" }}
+              whileTap={{ scale: 0.97 }}
+              onClick={() => navigate("/register")}
+              style={{
+                background: "linear-gradient(135deg, #8b5cf6, #6d28d9)",
+                color: "white", border: "none", padding: "16px 36px",
+                borderRadius: "14px", fontSize: "1.05rem", fontWeight: 700,
+                cursor: "pointer", boxShadow: "0 8px 24px rgba(139,92,246,0.35)",
+                display: "inline-flex", alignItems: "center", gap: "8px",
+              }}
+            >
+              Devenir Technicien <IconArrowRight />
+            </motion.button>
+          </AnimatedSection>
+        </div>
+      </section>
+
+      {/* ====== RECHERCHE D'OUVRIERS ====== */}
+      <section style={{ padding: "7rem 0", background: "var(--bg)" }}>
+        <div className="container">
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "4rem", alignItems: "center" }} className="workers-grid">
+            <AnimatedSection direction="right" style={{ order: 2 }}>
+              <span style={{
+                display: "inline-block", padding: "4px 14px", borderRadius: "100px",
+                background: "rgba(245,158,11,0.12)", color: "#f59e0b",
+                fontSize: "0.75rem", fontWeight: 700, letterSpacing: "0.08em",
+                textTransform: "uppercase", marginBottom: "1.25rem",
+              }}>
+                Emploi Agricole
+              </span>
+              <h2 style={{ fontSize: "clamp(1.8rem, 3.5vw, 2.5rem)", fontWeight: 800, color: "var(--text)", letterSpacing: "-0.03em", marginBottom: "1.25rem", lineHeight: 1.2 }}>
+                Recrutez des ouvriers<br />
+                <span style={{ color: "#f59e0b" }}>qualifiés</span>
+              </h2>
+              <p style={{ color: "var(--text-secondary)", fontSize: "1rem", lineHeight: 1.8, marginBottom: "1.5rem" }}>
+                Publiez vos offres d'emploi saisonnier et trouvez la main-d'œuvre dont vous avez besoin. Les ouvriers inscrits sur la plateforme peuvent voir vos offres et vous contacter directement.
+              </p>
+
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginBottom: "2rem" }}>
+                {[
+                  { icon: "📋", title: "Publiez une offre", desc: "Décrivez le poste, le salaire et la durée" },
+                  { icon: "👁️", title: "Visibilité totale", desc: "Tous les ouvriers voient votre annonce" },
+                  { icon: "📞", title: "Contact direct", desc: "Les ouvriers vous contactent directement" },
+                  { icon: "✅", title: "Contrats sécurisés", desc: "Suivi et gestion via la plateforme" },
+                ].map((item) => (
+                  <div key={item.title} style={{
+                    background: "var(--surface)", border: "1px solid var(--border)",
+                    borderRadius: "14px", padding: "1rem",
+                  }}>
+                    <div style={{ fontSize: "1.5rem", marginBottom: "0.5rem" }}>{item.icon}</div>
+                    <div style={{ fontWeight: 700, fontSize: "0.88rem", color: "var(--text)", marginBottom: "0.25rem" }}>{item.title}</div>
+                    <div style={{ fontSize: "0.78rem", color: "var(--text-muted)", lineHeight: 1.4 }}>{item.desc}</div>
+                  </div>
+                ))}
+              </div>
+
+              <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap" }}>
+                <motion.button
+                  whileHover={{ scale: 1.03, boxShadow: "0 12px 28px rgba(245,158,11,0.3)" }}
+                  whileTap={{ scale: 0.97 }}
+                  onClick={() => navigate("/jobs")}
+                  style={{
+                    background: "linear-gradient(135deg, #f59e0b, #d97706)",
+                    color: "white", border: "none", padding: "14px 28px",
+                    borderRadius: "14px", fontSize: "1rem", fontWeight: 700,
+                    cursor: "pointer", boxShadow: "0 6px 20px rgba(245,158,11,0.3)",
+                    display: "inline-flex", alignItems: "center", gap: "8px",
+                  }}
+                >
+                  Publier une offre <IconArrowRight />
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.02, background: "var(--surface)" }}
+                  whileTap={{ scale: 0.97 }}
+                  onClick={() => navigate("/jobs")}
+                  style={{
+                    background: "transparent", color: "#f59e0b",
+                    border: "1.5px solid rgba(245,158,11,0.3)",
+                    padding: "14px 28px", borderRadius: "14px",
+                    fontSize: "1rem", fontWeight: 600, cursor: "pointer",
+                  }}
+                >
+                  Voir les offres
+                </motion.button>
+              </div>
+            </AnimatedSection>
+
+            <AnimatedSection direction="left" style={{ order: 1 }}>
+              <motion.div
+                whileHover={{ scale: 1.01 }}
+                style={{
+                  borderRadius: "20px", overflow: "hidden",
+                  boxShadow: "0 20px 60px rgba(0,0,0,0.12)",
+                  border: "1px solid var(--border)",
+                  position: "relative",
+                }}
+              >
+                <img
+                  src="/images/hero/harvest.jpg"
+                  alt="Ouvriers agricoles au travail"
+                  style={{ width: "100%", height: "420px", objectFit: "cover", display: "block" }}
+                />
+                <div style={{
+                  position: "absolute", bottom: 0, left: 0, right: 0,
+                  background: "linear-gradient(transparent, rgba(0,0,0,0.8))",
+                  padding: "3rem 1.5rem 1.5rem",
+                }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "0.75rem" }}>
+                    <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#4ade80", animation: "pulse-soft 2s ease-in-out infinite" }} />
+                    <span style={{ color: "#86efac", fontSize: "0.8rem", fontWeight: 600 }}>Offres actives en ce moment</span>
+                  </div>
+                  <div style={{ display: "flex", gap: "1.5rem" }}>
+                    {[["Récolte", "Semis", "Désherbage"], ["Irrigation", "Taille", "Entretien"]].flat().slice(0, 4).map((type) => (
+                      <span key={type} style={{
+                        background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.15)",
+                        borderRadius: "100px", padding: "4px 12px",
+                        color: "rgba(255,255,255,0.8)", fontSize: "0.75rem", fontWeight: 600,
+                      }}>
+                        {type}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </motion.div>
+            </AnimatedSection>
+          </div>
+        </div>
+        <style>{`@media (max-width: 768px) { .workers-grid { grid-template-columns: 1fr !important; gap: 2rem !important; } .workers-grid > *:first-child { order: 2 !important; } .workers-grid > *:last-child { order: 1 !important; } }`}</style>
+      </section>
+
       {/* ====== WHY US (Features) ====== */}
       <section style={{ padding: "7rem 0", background: "var(--surface)", borderTop: "1px solid var(--border)" }}>
         <div className="container">
@@ -667,7 +1086,27 @@ export default function Landing() {
             </AnimatedSection>
 
             {/* Right: feature cards */}
-            <StaggerContainer style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }} staggerDelay={0.1}>
+            <StaggerContainer style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }} staggerDelay={0.1}>
+              {/* Image réelle */}
+              <StaggerItem>
+                <motion.div
+                  whileHover={{ scale: 1.01 }}
+                  style={{
+                    borderRadius: "20px",
+                    overflow: "hidden",
+                    boxShadow: "0 16px 48px rgba(0,0,0,0.12)",
+                    border: "1px solid var(--border)",
+                  }}
+                >
+                  <img
+                    src="/images/hero/farmer.jpg"
+                    alt="Agriculteur togolais dans son champ"
+                    style={{ width: "100%", height: "240px", objectFit: "cover", display: "block" }}
+                  />
+                </motion.div>
+              </StaggerItem>
+
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
               {features.map((f) => (
                 <StaggerItem key={f.title}>
                   <motion.div
@@ -688,6 +1127,7 @@ export default function Landing() {
                   </motion.div>
                 </StaggerItem>
               ))}
+              </div>
             </StaggerContainer>
           </div>
         </div>
@@ -848,22 +1288,18 @@ export default function Landing() {
 
                   {/* Author */}
                   <div style={{ display: "flex", alignItems: "center", gap: "12px", borderTop: "1px solid var(--border)", paddingTop: "1rem" }}>
-                    <div style={{
-                      width: "40px",
-                      height: "40px",
-                      borderRadius: "50%",
-                      background: t.color + "20",
-                      color: t.color,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      fontWeight: 700,
-                      fontSize: "0.85rem",
-                      flexShrink: 0,
-                      border: `2px solid ${t.color}30`,
-                    }}>
-                      {t.initials}
-                    </div>
+                    <img
+                      src={t.photo}
+                      alt={t.name}
+                      style={{
+                        width: "44px",
+                        height: "44px",
+                        borderRadius: "50%",
+                        objectFit: "cover",
+                        flexShrink: 0,
+                        border: `2px solid ${t.color}40`,
+                      }}
+                    />
                     <div>
                       <div style={{ fontWeight: 600, fontSize: "0.875rem", color: "var(--text)" }}>{t.name}</div>
                       <div style={{ fontSize: "0.775rem", color: "var(--text-muted)" }}>{t.role} · {t.region}</div>

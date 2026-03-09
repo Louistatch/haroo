@@ -17,9 +17,35 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
+from django.http import JsonResponse
+from drf_spectacular.views import (
+    SpectacularAPIView,
+    SpectacularSwaggerView,
+    SpectacularRedocView
+)
+
+
+def root_view(request):
+    return JsonResponse({
+        'name': 'Haroo API',
+        'version': '1.0.0',
+        'docs': '/api/docs/',
+        'admin': '/admin/',
+        'frontend': settings.FRONTEND_URL,
+    })
+
 
 urlpatterns = [
+    path('', root_view, name='root'),
     path('admin/', admin.site.urls),
+    
+    # API Documentation
+    path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
+    path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
+    path('api/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
+    
+    # API Endpoints
+    path('api/v1/', include('apps.core.urls')),  # Health check & monitoring
     path('api/v1/', include('apps.users.urls')),
     path('api/v1/', include('apps.locations.urls')),
     path('api/v1/', include('apps.documents.urls')),
@@ -32,6 +58,7 @@ urlpatterns = [
     path('api/v1/', include('apps.messaging.urls')),
     path('api/v1/', include('apps.presales.urls')),
     path('api/v1/', include('apps.jobs.urls')),
+    path('api/v1/elearning/', include('apps.elearning.urls')),
 ]
 
 # Ajouter les URLs de debug toolbar uniquement en mode DEBUG

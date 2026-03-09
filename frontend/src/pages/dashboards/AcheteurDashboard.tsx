@@ -39,18 +39,16 @@ export default function AcheteurDashboard({ user }: { user: any }) {
   }, []);
 
   const stats = [
-    { label: "Documents achetés", value: loading ? "…" : purchaseCount ?? 0 },
     { label: "Préventes engagées", value: "—" },
     { label: "Dépenses totales", value: loading ? "…" : `${totalSpent.toLocaleString("fr-FR")} F` },
     { label: "Jours membre", value: memberDays },
   ];
 
   const actions = [
-    { label: "Documents techniques", desc: "Parcourir le catalogue", icon: <IconDoc />, to: "/documents", color: "#f59e0b", bg: "#fffbeb" },
-    { label: "Mes achats", desc: "Historique et téléchargements", icon: <IconBag />, to: "/purchases", color: C, bg: "#ede9fe" },
-    { label: "Préventes agricoles", desc: "Engager des productions", icon: <IconPresale />, to: "/missions", color: "#16a34a", bg: "#dcfce7" },
-    { label: "Analyses de marché", desc: "Prix et tendances", icon: <IconMarket />, to: "/missions", color: "#0ea5e9", bg: "#e0f2fe" },
-    { label: "Mes téléchargements", desc: "Accéder aux fichiers", icon: <IconDownload />, to: "/purchases", color: "#d97706", bg: "#fef3c7" },
+    { label: "Ouvriers disponibles", desc: "Récolte et post-récolte", icon: <IconBag />, to: "/ouvriers", color: "#d97706", bg: "#fef3c7" },
+    { label: "Préventes agricoles", desc: "Engager des productions", icon: <IconPresale />, to: "/presales", color: "#16a34a", bg: "#dcfce7" },
+    { label: "Marchés & tendances", desc: "Prix et analyses locales", icon: <IconMarket />, to: "/markets", color: "#0ea5e9", bg: "#e0f2fe" },
+    { label: "Mes achats", desc: "Historique des achats", icon: <IconBag />, to: "/purchases", color: C, bg: "#ede9fe" },
     { label: "Paramètres", desc: "Sécurité du compte", icon: <IconSettings />, to: "/security", color: "#6366f1", bg: "#eef2ff" },
   ];
 
@@ -60,6 +58,8 @@ export default function AcheteurDashboard({ user }: { user: any }) {
 
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}
           style={{ background: "linear-gradient(135deg, #3b0764 0%, #6d28d9 60%, #8b5cf6 100%)", borderRadius: "20px", padding: "2.5rem", marginBottom: "1.75rem", position: "relative", overflow: "hidden" }}>
+          <div style={{ position: "absolute", inset: 0, backgroundImage: "url('/images/hero/market.jpg')", backgroundSize: "cover", backgroundPosition: "center", opacity: 0.1 }} />
+          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(135deg, rgba(59,7,100,0.92) 0%, rgba(109,40,217,0.88) 60%, rgba(139,92,246,0.85) 100%)" }} />
           <div style={{ position: "absolute", inset: 0, backgroundImage: "radial-gradient(circle at 75% 25%, rgba(255,255,255,0.07) 0%, transparent 55%)", pointerEvents: "none" }} />
           <div style={{ display: "flex", alignItems: "center", gap: "1.25rem", position: "relative" }}>
             <div style={{ width: 58, height: 58, borderRadius: "50%", background: "rgba(255,255,255,0.15)", border: "2px solid rgba(255,255,255,0.25)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
@@ -75,7 +75,7 @@ export default function AcheteurDashboard({ user }: { user: any }) {
               </div>
             </div>
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "1rem", marginTop: "2rem", position: "relative" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "1rem", marginTop: "2rem", position: "relative" }}>
             {stats.map(s => (
               <div key={s.label} style={{ background: "rgba(255,255,255,0.08)", borderRadius: "12px", padding: "0.9rem 1rem" }}>
                 <div style={{ color: "rgba(255,255,255,0.45)", fontSize: "0.68rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "0.25rem" }}>{s.label}</div>
@@ -114,8 +114,8 @@ export default function AcheteurDashboard({ user }: { user: any }) {
             ) : purchases.length === 0 ? (
               <div style={{ textAlign: "center", padding: "1.5rem 0" }}>
                 <div style={{ color: "var(--text-muted)", fontSize: "0.85rem", marginBottom: "0.75rem" }}>Aucun achat pour l'instant</div>
-                <button onClick={() => navigate("/documents")} style={{ background: C, color: "white", border: "none", borderRadius: "10px", padding: "0.55rem 1.1rem", fontWeight: 600, fontSize: "0.85rem", cursor: "pointer" }}>
-                  Parcourir les documents
+                <button onClick={() => navigate("/presales")} style={{ background: C, color: "white", border: "none", borderRadius: "10px", padding: "0.55rem 1.1rem", fontWeight: 600, fontSize: "0.85rem", cursor: "pointer" }}>
+                  Voir les préventes
                 </button>
               </div>
             ) : (

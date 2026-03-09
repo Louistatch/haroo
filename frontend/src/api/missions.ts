@@ -46,8 +46,18 @@ export async function acceptMission(id: number): Promise<Mission> {
   return res.data;
 }
 
-export async function refuseMission(id: number): Promise<{ detail: string }> {
-  const res = await api.patch(`/missions/${id}/`, { statut: 'REFUSEE' });
+export async function refuseMission(id: number): Promise<Mission> {
+  const res = await api.post(`/missions/${id}/refuse/`);
+  return res.data;
+}
+
+export async function cancelMission(id: number): Promise<Mission> {
+  const res = await api.post(`/missions/${id}/cancel/`);
+  return res.data;
+}
+
+export async function startMission(id: number): Promise<Mission> {
+  const res = await api.post(`/missions/${id}/start/`);
   return res.data;
 }
 

@@ -49,6 +49,33 @@ app.conf.beat_schedule = {
             'expires': 3600,
         }
     },
+
+    # Libérer automatiquement les fonds escrow après délai de grâce
+    'auto-release-escrow-daily': {
+        'task': 'payments.auto_release_escrow',
+        'schedule': crontab(hour=6, minute=0),  # Tous les jours à 6h00
+        'options': {
+            'expires': 86400,
+        }
+    },
+
+    # Réconciliation des paiements FedaPay (vérifier les transactions en attente)
+    'reconcile-pending-payments': {
+        'task': 'payments.reconcile_pending_transactions',
+        'schedule': crontab(minute=0, hour='*/4'),  # Toutes les 4 heures
+        'options': {
+            'expires': 14400,
+        }
+    },
+
+    # Envoyer les notifications en attente
+    'send-pending-notifications': {
+        'task': 'notifications.send_pending_notifications',
+        'schedule': crontab(minute='*/5'),  # Toutes les 5 minutes
+        'options': {
+            'expires': 300,
+        }
+    },
 }
 
 # Configuration du timezone

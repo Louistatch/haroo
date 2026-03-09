@@ -22,7 +22,7 @@ class JWTAuthentication(BaseAuthentication):
     
     def authenticate(self, request):
         """
-        Authentifie la requête en vérifiant le token JWT
+        Authentifie la requête en vérifiant le token JWT (Header ou Cookie)
         
         Returns:
             tuple (user, token) si authentification réussie
@@ -31,23 +31,23 @@ class JWTAuthentication(BaseAuthentication):
         Raises:
             AuthenticationFailed si le token est invalide
         """
+        # Essayer d'abord l'en-tête Authorization
         auth_header = request.META.get('HTTP_AUTHORIZATION', '')
+        token = None
         
-        if not auth_header:
+        if auth_header:
+            parts = auth_header.split()
+            if len(parts) == 2 and parts[0] == self.keyword:
+                token = parts[1]
+        
+        # Si pas de header, essayer le cookie
+        if not token:
+            token = request.COOKIES.get('access_token')
+        
+        if not token:
             return None
         
         try:
-            # Extraire le token
-            parts = auth_header.split()
-            
-            if len(parts) != 2:
-                raise AuthenticationFailed('Format d\'en-tête Authorization invalide')
-            
-            if parts[0] != self.keyword:
-                raise AuthenticationFailed('Type d\'authentification non supporté')
-            
-            token = parts[1]
-            
             # Vérifier le token
             payload = JWTAuthService.verify_token(token, token_type='access')
             

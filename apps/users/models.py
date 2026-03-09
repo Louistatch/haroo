@@ -18,6 +18,7 @@ class User(AbstractUser):
     Modèle utilisateur personnalisé pour Haroo
     """
     USER_TYPE_CHOICES = [
+        ('', 'Non défini'),
         ('EXPLOITANT', 'Exploitant'),
         ('AGRONOME', 'Agronome'),
         ('OUVRIER', 'Ouvrier Agricole'),
@@ -37,9 +38,15 @@ class User(AbstractUser):
         default=False,
         verbose_name="Téléphone vérifié"
     )
+    email_verified = models.BooleanField(
+        default=False,
+        verbose_name="Email vérifié"
+    )
     user_type = models.CharField(
         max_length=20,
         choices=USER_TYPE_CHOICES,
+        blank=True,
+        default='',
         verbose_name="Type d'utilisateur"
     )
     two_factor_enabled = models.BooleanField(
@@ -97,13 +104,16 @@ class ExploitantProfile(models.Model):
     superficie_totale = models.DecimalField(
         max_digits=10,
         decimal_places=2,
-        validators=[MinValueValidator(0.01)],
+        validators=[MinValueValidator(0)],
+        default=0,
         verbose_name="Superficie totale (hectares)",
         help_text="Superficie totale de l'exploitation en hectares"
     )
     canton_principal = models.ForeignKey(
         'locations.Canton',
         on_delete=models.PROTECT,
+        null=True,
+        blank=True,
         verbose_name="Canton principal"
     )
     
@@ -116,7 +126,9 @@ class ExploitantProfile(models.Model):
     else:
         coordonnees_gps = models.JSONField(
             verbose_name="Coordonnées GPS",
-            help_text='Format: {"lat": latitude, "lon": longitude}'
+            help_text='Format: {"lat": latitude, "lon": longitude}',
+            default=dict,
+            blank=True,
         )
     
     statut_verification = models.CharField(
@@ -397,6 +409,54 @@ class AcheteurProfile(models.Model):
         default='PARTICULIER',
         verbose_name="Type d'acheteur"
     )
+    telephone = models.CharField(
+        max_length=20,
+        blank=True,
+        verbose_name="Numéro de téléphone"
+    )
+    
+    # Localisation
+    region = models.ForeignKey(
+        'locations.Region',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='acheteurs',
+        verbose_name="Région"
+    )
+    prefecture = models.ForeignKey(
+        'locations.Prefecture',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='acheteurs',
+        verbose_name="Préfecture"
+    )
+    canton = models.ForeignKey(
+        'locations.Canton',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='acheteurs',
+        verbose_name="Canton"
+    )
+    
+    # Produits d'intérêt
+    produits_interesses = models.JSONField(
+        default=list,
+        verbose_name="Produits d'intérêt",
+        help_text="Liste des produits que l'acheteur souhaite acheter"
+    )
+    
+    # Localités d'intervention
+    cantons_intervention = models.ManyToManyField(
+        'locations.Canton',
+        related_name='acheteurs_actifs',
+        blank=True,
+        verbose_name="Cantons d'intervention",
+        help_text="Zones géographiques où l'acheteur intervient"
+    )
+    
     volume_achats_annuel = models.DecimalField(
         max_digits=12,
         decimal_places=2,
@@ -406,6 +466,12 @@ class AcheteurProfile(models.Model):
         verbose_name="Volume d'achats annuel (tonnes)",
         help_text="Volume d'achats annuel estimé en tonnes"
     )
+    
+    profil_complet = models.BooleanField(
+        default=False,
+        verbose_name="Profil complet",
+        help_text="Indique si le profil est complètement renseigné"
+    )
 
     class Meta:
         verbose_name = "Profil Acheteur"
@@ -413,6 +479,18 @@ class AcheteurProfile(models.Model):
 
     def __str__(self):
         return f"Acheteur: {self.user.username} - {self.get_type_acheteur_display()}"
+    
+    def save(self, *args, **kwargs):
+        # Vérifier si le profil est complet
+        self.profil_complet = bool(
+            self.telephone and 
+            self.region and 
+            self.prefecture and 
+            self.canton and 
+            self.produits_interesses and
+            len(self.produits_interesses) > 0
+        )
+        super().save(*args, **kwargs)
 
 
 class InstitutionProfile(models.Model):

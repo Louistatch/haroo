@@ -13,16 +13,40 @@ class UserShortSerializer(serializers.ModelSerializer):
 
 class MessageSerializer(serializers.ModelSerializer):
     expediteur_nom = serializers.CharField(source='expediteur.get_full_name', read_only=True)
+    fichier_url = serializers.SerializerMethodField()
     
     class Meta:
         model = Message
-        fields = ['id', 'conversation', 'expediteur', 'expediteur_nom', 'contenu', 'lu', 'date_lecture', 'signale', 'created_at']
+        fields = [
+            'id', 'conversation', 'expediteur', 'expediteur_nom',
+            'contenu', 'fichier_url', 'nom_fichier', 'taille_fichier',
+            'lu', 'date_lecture', 'signale', 'created_at'
+        ]
         read_only_fields = ['expediteur', 'lu', 'date_lecture', 'signale']
+    
+    def get_fichier_url(self, obj):
+        if obj.fichier:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.fichier.url)
+            return obj.fichier.url
+        return None
 
 class MessageCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Message
-        fields = ['contenu']
+        fields = ['contenu', 'fichier']
+    
+    def validate_fichier(self, value):
+        if value and value.size > Message.MAX_FILE_SIZE:
+            raise serializers.ValidationError("Le fichier ne doit pas dépasser 5 Mo.")
+        return value
+    
+    def validate(self, attrs):
+        # Au moins un contenu ou un fichier
+        if not attrs.get('contenu') and not attrs.get('fichier'):
+            raise serializers.ValidationError("Un message doit contenir du texte ou un fichier.")
+        return attrs
 
 class ConversationSerializer(serializers.ModelSerializer):
     participant_1 = UserShortSerializer(read_only=True)
@@ -42,7 +66,7 @@ class ConversationSerializer(serializers.ModelSerializer):
     def get_last_message(self, obj):
         last_msg = obj.messages.order_by('-created_at').first()
         if last_msg:
-            return MessageSerializer(last_msg).data
+            return MessageSerializer(last_msg, context=self.context).data
         return None
 
     def get_unread_count(self, obj):

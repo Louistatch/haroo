@@ -1,24 +1,14 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getAgronomists } from '../api/auth';
 
-interface AgronomistUser {
-  id: number;
-  first_name: string;
-  last_name: string;
-  phone_number: string;
-}
-
-interface Canton {
-  nom: string;
-  prefecture: { nom: string; region: { nom: string; }; };
-}
-
 interface Agronomist {
   id: number;
-  user: AgronomistUser;
+  nom_complet: string;
   specialisations: string[];
-  canton_rattachement: Canton;
+  canton_nom: string;
+  prefecture_nom: string;
+  region_nom: string;
   note_moyenne: string;
   nombre_avis: number;
   badge_valide: boolean;
@@ -64,13 +54,13 @@ const cardVariants = {
   hidden: { opacity: 0, y: 28 },
   visible: (i: number) => ({
     opacity: 1, y: 0,
-    transition: { delay: i * 0.07, duration: 0.45, ease: [0.22, 1, 0.36, 1] },
+    transition: { delay: i * 0.07, duration: 0.45, ease: [0.22, 1, 0.36, 1] as const },
   }),
 };
 
 const modalVariants = {
   hidden: { opacity: 0, scale: 0.92, y: 20 },
-  visible: { opacity: 1, scale: 1, y: 0, transition: { duration: 0.35, ease: [0.22, 1, 0.36, 1] } },
+  visible: { opacity: 1, scale: 1, y: 0, transition: { duration: 0.35, ease: [0.22, 1, 0.36, 1] as const } },
   exit: { opacity: 0, scale: 0.94, y: 10, transition: { duration: 0.2 } },
 };
 
@@ -100,10 +90,12 @@ export default function Agronomists() {
 
   useEffect(() => { fetchAgronomists(); }, [fetchAgronomists]);
 
-  const getAvatarGradient = (id: number) => AVATAR_GRADIENTS[id % AVATAR_GRADIENTS.length];
+  const getAvatarImage = (id: number) => {
+    const idx = (id % 12) + 1;
+    return `/images/users/agronomist-${idx}.jpg`;
+  };
 
-  const getInitials = (a: Agronomist) =>
-    ((a.user.first_name?.[0] || '') + (a.user.last_name?.[0] || '')).toUpperCase() || 'AG';
+  const getAvatarGradient = (id: number) => AVATAR_GRADIENTS[id % AVATAR_GRADIENTS.length];
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
@@ -113,6 +105,7 @@ export default function Agronomists() {
         background: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4338ca 100%)',
         padding: '5rem 2rem 4rem', position: 'relative', overflow: 'hidden',
       }}>
+        <div style={{ position: 'absolute', inset: 0, backgroundImage: "url('/images/hero/harvest.jpg')", backgroundSize: 'cover', backgroundPosition: 'center', opacity: 0.15 }} />
         <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(circle at 25% 60%, rgba(139,92,246,0.12) 0%, transparent 50%), radial-gradient(circle at 75% 30%, rgba(99,102,241,0.1) 0%, transparent 40%)' }} />
         <div style={{ position: 'absolute', inset: 0, backgroundImage: 'linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px)', backgroundSize: '60px 60px' }} />
         <div style={{ maxWidth: '800px', margin: '0 auto', textAlign: 'center', position: 'relative' }}>
@@ -279,12 +272,12 @@ export default function Agronomists() {
 
                     {/* avatar */}
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '0 1.25rem 1.25rem' }}>
-                      <div style={{ width: 68, height: 68, borderRadius: '50%', background: gradient, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '4px solid var(--surface)', marginTop: '-34px', boxShadow: '0 4px 16px rgba(0,0,0,0.15)', flexShrink: 0 }}>
-                        <span style={{ color: 'white', fontSize: '1.4rem', fontWeight: 800 }}>{getInitials(agro)}</span>
+                      <div style={{ width: 68, height: 68, borderRadius: '50%', overflow: 'hidden', border: '4px solid var(--surface)', marginTop: '-34px', boxShadow: '0 4px 16px rgba(0,0,0,0.15)', flexShrink: 0 }}>
+                        <img src={getAvatarImage(agro.id)} alt={agro.nom_complet} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                       </div>
 
                       <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text)', marginTop: '0.75rem', marginBottom: '0.25rem', textAlign: 'center' }}>
-                        {agro.user.first_name} {agro.user.last_name}
+                        {agro.nom_complet}
                       </h3>
 
                       {/* rating */}
@@ -298,7 +291,7 @@ export default function Agronomists() {
                       {/* location */}
                       <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: '1rem', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
                         <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1C4.34 1 3 2.34 3 4c0 2.25 3 7 3 7s3-4.75 3-7c0-1.66-1.34-3-3-3z" stroke="currentColor" strokeWidth="1.2"/><circle cx="6" cy="4" r="1" fill="currentColor"/></svg>
-                        {agro.canton_rattachement.nom}, {agro.canton_rattachement.prefecture.nom}
+                        {agro.canton_nom}, {agro.prefecture_nom}
                       </div>
 
                       {/* specs */}
@@ -347,11 +340,11 @@ export default function Agronomists() {
                   onMouseLeave={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.2)')}>
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 3l10 10M13 3L3 13" stroke="white" strokeWidth="2" strokeLinecap="round"/></svg>
                 </button>
-                <div style={{ width: 80, height: 80, borderRadius: '50%', background: 'rgba(255,255,255,0.25)', backdropFilter: 'blur(10px)', border: '3px solid rgba(255,255,255,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1rem' }}>
-                  <span style={{ color: 'white', fontSize: '2rem', fontWeight: 800 }}>{getInitials(selected)}</span>
+                <div style={{ width: 80, height: 80, borderRadius: '50%', overflow: 'hidden', border: '3px solid rgba(255,255,255,0.4)', margin: '0 auto 1rem', boxShadow: '0 4px 16px rgba(0,0,0,0.2)' }}>
+                  <img src={getAvatarImage(selected.id)} alt={selected.nom_complet} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 </div>
                 <h2 style={{ color: 'white', fontSize: '1.4rem', fontWeight: 800, margin: '0 0 0.25rem' }}>
-                  {selected.user.first_name} {selected.user.last_name}
+                  {selected.nom_complet}
                 </h2>
                 {selected.badge_valide && (
                   <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: 'rgba(255,255,255,0.2)', border: '1px solid rgba(255,255,255,0.3)', borderRadius: '100px', padding: '4px 12px' }}>
@@ -378,14 +371,9 @@ export default function Agronomists() {
                 {/* info grid */}
                 {[
                   {
-                    icon: <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 2.5A1.5 1.5 0 013.5 1h.5a2 2 0 012 2v1a2 2 0 01-2 2H3L2 8s1 5 6 6c5-1 6-6 6-6l-1-2H11a2 2 0 01-2-2V3a2 2 0 012-2h.5A1.5 1.5 0 0114 2.5" stroke="var(--primary)" strokeWidth="1.2"/></svg>,
-                    label: 'Téléphone',
-                    value: selected.user.phone_number,
-                  },
-                  {
                     icon: <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 1C5.24 1 3 3.24 3 6c0 3.75 5 9 5 9s5-5.25 5-9c0-2.76-2.24-5-5-5z" stroke="#6366f1" strokeWidth="1.2"/><circle cx="8" cy="6" r="2" fill="#6366f1"/></svg>,
                     label: 'Localisation',
-                    value: `${selected.canton_rattachement.nom} · ${selected.canton_rattachement.prefecture.nom} · Région ${selected.canton_rattachement.prefecture.region.nom}`,
+                    value: `${selected.canton_nom} · ${selected.prefecture_nom} · Région ${selected.region_nom}`,
                   },
                 ].map(({ icon, label, value }) => (
                   <div key={label} style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start', marginBottom: '1.25rem', paddingBottom: '1.25rem', borderBottom: '1px solid var(--border)' }}>
@@ -418,7 +406,7 @@ export default function Agronomists() {
               {/* modal footer */}
               <div style={{ padding: '1.25rem 2rem', borderTop: '1px solid var(--border)', display: 'flex', gap: '0.75rem' }}>
                 <motion.a whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
-                  href={`tel:${selected.user.phone_number}`}
+                  href={`#`}
                   style={{ flex: 1, padding: '0.75rem', background: getAvatarGradient(selected.id), color: 'white', border: 'none', borderRadius: '12px', fontWeight: 700, fontSize: '0.95rem', cursor: 'pointer', textAlign: 'center', textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 2.5A1.5 1.5 0 013.5 1h.5a2 2 0 012 2v1a2 2 0 01-2 2H3L2 8s1 5 6 6c5-1 6-6 6-6l-1-2H11a2 2 0 01-2-2V3a2 2 0 012-2h.5A1.5 1.5 0 0114 2.5" stroke="white" strokeWidth="1.3"/></svg>
                   Appeler

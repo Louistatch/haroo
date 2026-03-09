@@ -55,6 +55,7 @@ export default function AgronomeDashboard({ user }: { user: any }) {
     { label: "Mon planning", desc: "Calendrier des interventions", icon: <IconCalendar />, to: "/missions", color: "#7c3aed", bg: "#ede9fe" },
     { label: "Mes notations", desc: "Avis des exploitants", icon: <IconStar />, to: "/ratings", color: "#f59e0b", bg: "#fef3c7" },
     { label: "Documents techniques", desc: "Accéder au catalogue", icon: <IconDoc />, to: "/documents", color: "#0ea5e9", bg: "#e0f2fe" },
+    { label: "Marchés de proximité", desc: "Prix et tendances locales", icon: <IconCalendar />, to: "/markets", color: "#d97706", bg: "#fef3c7" },
     { label: "Sécurité", desc: "Paramètres du compte", icon: <IconSettings />, to: "/security", color: "#6366f1", bg: "#eef2ff" },
   ];
 
@@ -64,6 +65,8 @@ export default function AgronomeDashboard({ user }: { user: any }) {
 
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}
           style={{ background: "linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 60%, #3b82f6 100%)", borderRadius: "20px", padding: "2.5rem", marginBottom: "1.75rem", position: "relative", overflow: "hidden" }}>
+          <div style={{ position: "absolute", inset: 0, backgroundImage: "url('/images/hero/farmer.jpg')", backgroundSize: "cover", backgroundPosition: "center", opacity: 0.1 }} />
+          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(135deg, rgba(30,58,138,0.92) 0%, rgba(29,78,216,0.88) 60%, rgba(59,130,246,0.85) 100%)" }} />
           <div style={{ position: "absolute", inset: 0, backgroundImage: "radial-gradient(circle at 75% 25%, rgba(255,255,255,0.07) 0%, transparent 50%)", pointerEvents: "none" }} />
           <div style={{ position: "absolute", right: 32, top: 32, opacity: 0.06 }}>
             <IconBadge />
@@ -148,12 +151,16 @@ export default function AgronomeDashboard({ user }: { user: any }) {
             style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "16px", padding: "1.5rem" }}>
             <div style={{ fontWeight: 700, color: "var(--text)", fontSize: "0.95rem", marginBottom: "1.25rem" }}>Mon dossier professionnel</div>
             <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-              {[
-                { label: "Statut dossier", value: "Actif", color: "#16a34a" },
-                { label: "Spécialisations", value: "Non renseignées" },
-                { label: "Canton d'intervention", value: "Non renseigné" },
-                { label: "Visibilité annuaire", value: "Publique", color: "#16a34a" },
-              ].map(row => (
+              {(() => {
+                const ap = user.agronome_profile;
+                const verif = ap?.statut_validation === 'VALIDE' ? { v: "Validé", c: "#16a34a" } : ap?.statut_validation === 'EN_ATTENTE' ? { v: "En attente", c: "#d97706" } : { v: ap?.statut_validation || "Non renseigné", c: "var(--text)" };
+                return [
+                  { label: "Statut dossier", value: verif.v, color: verif.c },
+                  { label: "Spécialisations", value: ap?.specialisations?.length ? ap.specialisations.join(", ") : "Non renseignées" },
+                  { label: "Canton d'intervention", value: ap?.canton_rattachement_nom || "Non renseigné" },
+                  { label: "Note moyenne", value: ap?.note_moyenne && parseFloat(ap.note_moyenne) > 0 ? `${parseFloat(ap.note_moyenne).toFixed(1)} / 5 (${ap.nombre_avis} avis)` : "Pas encore noté" },
+                ];
+              })().map(row => (
                 <div key={row.label} style={{ padding: "0.7rem", background: "var(--bg)", borderRadius: "10px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <span style={{ fontSize: "0.75rem", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.04em" }}>{row.label}</span>
                   <span style={{ fontWeight: 700, color: row.color || "var(--text)", fontSize: "0.85rem" }}>{row.value}</span>

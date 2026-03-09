@@ -1,3 +1,7 @@
+# Haroo - Requirements
+# Pour le développement local, utiliser: pip install -r requirements.txt
+# Pour Docker (sans GDAL), utiliser: pip install -r requirements-no-gdal.txt
+
 # Django Core
 Django==4.2.7
 django-environ==0.11.2
@@ -6,70 +10,81 @@ django-environ==0.11.2
 psycopg2-binary==2.9.9
 django-redis==5.4.0
 
-# PostGIS
+# PostGIS (nécessite GDAL installé sur le système)
 GDAL==3.7.3
 
 # REST Framework
 djangorestframework==3.14.0
 djangorestframework-simplejwt==5.3.0
 
+# API Documentation
+drf-spectacular==0.27.0
+
 # CORS
 django-cors-headers==4.3.1
 
 # Password Hashing
-bcrypt==4.1.1
+bcrypt==4.1.2
 
 # Rate Limiting
 django-ratelimit==4.1.0
 
 # File Storage
-boto3==1.29.7
+boto3==1.34.10
 django-storages==1.14.2
+cloudinary==1.40.0
 
 # Excel and PDF Export
 openpyxl==3.1.2
 reportlab==4.0.7
 Pillow==10.1.0
+python-docx==1.1.0
 
 # Celery
 celery==5.3.4
 redis==5.0.1
 
-# Fedapay
-fedapay==0.1.8
+# WSGI Server
+gunicorn==21.2.0
 
-# SMS Gateway (generic requests library)
+# Database URL parsing (Railway/Render/Heroku)
+dj-database-url==2.1.0
+
+# Static files serving
+whitenoise==6.6.0
+
+# Security & Crypto
+cryptography==41.0.7
+python-jose[cryptography]==3.3.0
+pyotp==2.9.0
+qrcode[pil]==7.4.2
+
+# HTTP
 requests==2.31.0
+
+# Firebase Auth
+firebase-admin>=7.0.0
+
+# Email
+premailer
+
+# Filtering
+django-filter==23.5
+
+# Monitoring & Logging
+sentry-sdk==1.40.0
+python-json-logger==2.0.7
+
+# Fedapay
+fedapay==0.3.0
 
 # Testing
 pytest==7.4.3
 pytest-django==4.7.0
+pytest-cov==4.1.0
 factory-boy==3.3.0
 hypothesis==6.92.1
 
 # Code Quality
 flake8==6.1.0
 black==23.11.0
-bcrypt==4.1.2
-boto3==1.34.10
-cloudinary==1.40.0
-cryptography==41.0.7
-Django==4.2.7
-django-cors-headers==4.3.1
-django-environ==0.11.2
-django-filter==23.5
-django-ratelimit==4.1.0
-django-storages==1.14.2
-djangorestframework==3.14.0
-djangorestframework-simplejwt==5.3.0
-openpyxl==3.1.2
-Pillow==10.1.0
-premailer
-pyotp==2.9.0
-python-docx==1.1.0
-python-jose[cryptography]==3.3.0
-qrcode[pil]==7.4.2
-reportlab==4.0.7
-requests==2.31.0
-celery==5.3.4
-redis==5.0.1

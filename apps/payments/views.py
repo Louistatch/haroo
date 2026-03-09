@@ -18,7 +18,8 @@ from .serializers import (
     PaymentResponseSerializer,
     TransactionSerializer,
     TransactionHistorySerializer,
-    WebhookPayloadSerializer
+    WebhookPayloadSerializer,
+    MobileMoneyPaymentSerializer,
 )
 from .services import FedapayService, TransactionService
 from .post_payment_actions import PostPaymentActionHandler
@@ -332,3 +333,101 @@ class PaymentCallbackView(APIView):
             'REFUNDED': "Votre paiement a été remboursé"
         }
         return messages.get(statut, "Statut inconnu")
+
+
+class MobileMoneyPaymentView(APIView):
+    """
+    POST /api/v1/payments/mobile-money
+
+    Paiement Mobile Money direct (sans redirection vers FedaPay checkout).
+    Envoie une demande de paiement directement sur le téléphone du client.
+    Modes Togo: moov_tg, togocel
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        serializer = MobileMoneyPaymentSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(
+                {"success": False, "errors": serializer.errors},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            data = serializer.validated_data
+            transaction = TransactionService.create_transaction(
+                utilisateur=request.user,
+                type_transaction=data["type_transaction"],
+                montant=data["montant"],
+                reference_externe=data.get("reference_externe"),
+            )
+
+            frontend_url = getattr(settings, "FRONTEND_URL", "http://localhost:5000")
+            callback_url = f"{frontend_url.rstrip('/')}/payment/success"
+
+            fedapay_service = FedapayService()
+            result = fedapay_service.send_mobile_money(
+                transaction=transaction,
+                mode=data["mode"],
+                phone_number=data["phone_number"],
+                callback_url=callback_url,
+                description=data.get("description", ""),
+            )
+
+            return Response(result, status=status.HTTP_201_CREATED)
+
+        except Exception as e:
+            logger.error("Erreur Mobile Money: %s", e)
+            return Response(
+                {"success": False, "error": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+
+class TransactionStatusView(APIView):
+    """
+    GET /api/v1/payments/status/<transaction_id>
+
+    Vérifier le statut d'une transaction (polling côté frontend).
+    Interroge FedaPay si la transaction est encore PENDING.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, pk):
+        try:
+            transaction = Transaction.objects.get(pk=pk, utilisateur=request.user)
+        except Transaction.DoesNotExist:
+            return Response(
+                {"error": "Transaction non trouvée"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # Si PENDING et qu'on a un ID FedaPay, vérifier le statut en temps réel
+        if transaction.statut == "PENDING" and transaction.fedapay_transaction_id:
+            try:
+                fedapay_service = FedapayService()
+                fedapay_status = fedapay_service.get_transaction_status(
+                    transaction.fedapay_transaction_id
+                )
+                status_map = {
+                    "approved": "SUCCESS",
+                    "declined": "FAILED",
+                    "canceled": "FAILED",
+                    "refunded": "REFUNDED",
+                }
+                new_status = status_map.get(fedapay_status.get("status"), "PENDING")
+                if new_status != "PENDING":
+                    TransactionService.update_transaction_status(transaction, new_status)
+                    if new_status == "SUCCESS":
+                        PostPaymentActionHandler.handle_successful_payment(transaction)
+            except Exception as e:
+                logger.warning("Impossible de vérifier le statut FedaPay: %s", e)
+
+        return Response({
+            "transaction_id": str(transaction.id),
+            "statut": transaction.statut,
+            "statut_display": transaction.get_statut_display(),
+            "montant": str(transaction.montant),
+            "type": transaction.get_type_transaction_display(),
+            "fedapay_transaction_id": transaction.fedapay_transaction_id,
+        })

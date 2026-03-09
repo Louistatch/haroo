@@ -173,3 +173,60 @@ class WebhookPayloadSerializer(serializers.Serializer):
             raise serializers.ValidationError("Champ 'name' ou 'event' requis")
         data['event'] = event_name
         return data
+
+
+class MobileMoneyPaymentSerializer(serializers.Serializer):
+    """
+    Serializer pour le paiement Mobile Money direct (sans redirection).
+    """
+    type_transaction = serializers.ChoiceField(
+        choices=Transaction.TYPE_CHOICES,
+        required=True,
+        help_text="Type de transaction",
+    )
+    montant = FCFADecimalField(
+        max_digits=12,
+        decimal_places=2,
+        min_value=Decimal('100.00'),
+        required=True,
+        help_text="Montant en FCFA (minimum 100)",
+    )
+    mode = serializers.ChoiceField(
+        choices=[
+            ('moov_tg', 'Moov Togo'),
+            ('togocel', 'Togocel T-Money'),
+        ],
+        required=True,
+        help_text="Mode de paiement Mobile Money",
+    )
+    phone_number = serializers.CharField(
+        max_length=20,
+        required=True,
+        help_text="Numéro de téléphone (ex: 90123456)",
+    )
+    reference_externe = serializers.CharField(
+        max_length=100,
+        required=False,
+        allow_blank=True,
+    )
+    description = serializers.CharField(
+        max_length=255,
+        required=False,
+        allow_blank=True,
+    )
+
+    def validate_montant(self, value):
+        if value <= 0:
+            raise serializers.ValidationError("Le montant doit être positif")
+        if value > Decimal('10000000.00'):
+            raise serializers.ValidationError("Le montant ne peut pas dépasser 10 000 000 FCFA")
+        return value
+
+    def validate_phone_number(self, value):
+        import re
+        cleaned = re.sub(r'[\s\-\+]', '', value)
+        if cleaned.startswith('228'):
+            cleaned = cleaned[3:]
+        if not re.match(r'^\d{8}$', cleaned):
+            raise serializers.ValidationError("Numéro togolais invalide (8 chiffres attendus)")
+        return cleaned

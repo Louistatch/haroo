@@ -47,12 +47,12 @@ class PreventeCreateSerializer(serializers.ModelSerializer):
 
 class EngagementSerializer(serializers.ModelSerializer):
     acheteur_nom = serializers.CharField(source='acheteur.get_full_name', read_only=True)
-    prevente_culture = serializers.CharField(source='prevente.culture', read_only=True)
+    prevente_detail = PreventeListSerializer(source='prevente', read_only=True)
 
     class Meta:
         model = EngagementPrevente
         fields = [
-            'id', 'prevente', 'prevente_culture', 'acheteur', 'acheteur_nom', 
+            'id', 'prevente', 'prevente_detail', 'acheteur', 'acheteur_nom', 
             'quantite_engagee', 'montant_total', 'acompte_20', 
             'transaction_acompte', 'statut', 'date_livraison', 'created_at'
         ]

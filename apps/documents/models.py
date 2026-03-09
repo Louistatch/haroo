@@ -39,7 +39,9 @@ class DocumentTemplate(TimeStampedModel):
     )
     variables_requises = models.JSONField(
         default=list,
-        verbose_name="Variables requises"
+        blank=True,
+        verbose_name="Variables requises",
+        help_text="Liste JSON des variables du template, ex: [\"culture\", \"superficie\"]. Laisser vide si aucune."
     )
     version = models.IntegerField(default=1, verbose_name="Version")
 

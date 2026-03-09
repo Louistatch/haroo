@@ -40,6 +40,7 @@ DJANGO_APPS = [
 
 THIRD_PARTY_APPS = [
     'rest_framework',
+    'drf_spectacular',  # API Documentation
     'corsheaders',
     'django_redis',
     'storages',
@@ -60,6 +61,7 @@ LOCAL_APPS = [
     'apps.messaging',
     'apps.presales',
     'apps.jobs',
+    'apps.elearning',
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -74,9 +76,13 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'apps.users.middleware.RateLimitMiddleware',
+    # Rate Limiting (TASK-5: Rate Limiting Robuste)
+    'apps.core.rate_limiting.AdvancedRateLimitMiddleware',  # Nouveau middleware avancé
+    # 'apps.users.middleware.RateLimitMiddleware',  # Ancien middleware (deprecated)
     'apps.users.middleware.SecurityHeadersMiddleware',
     'apps.users.middleware.SessionActivityMiddleware',  # Exigences: 40.1
+    # TASK-7.2: Logging structuré des requêtes
+    'apps.core.middleware.RequestLoggingMiddleware',
 ]
 
 ROOT_URLCONF = 'haroo.urls'
@@ -233,12 +239,46 @@ REST_FRAMEWORK = {
         'rest_framework.parsers.MultiPartParser',
         'rest_framework.parsers.FormParser',
     ],
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+}
+
+
+# DRF Spectacular (Swagger/OpenAPI)
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'Haroo API',
+    'DESCRIPTION': 'API de la Plateforme Agricole Intelligente du Togo - Documentation interactive des endpoints REST',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    'COMPONENT_SPLIT_REQUEST': True,
+    'SCHEMA_PATH_PREFIX': r'/api/v[0-9]',
+    'SWAGGER_UI_SETTINGS': {
+        'deepLinking': True,
+        'persistAuthorization': True,
+        'displayOperationId': True,
+    },
+    'TAGS': [
+        {'name': 'Authentification', 'description': 'Endpoints d\'authentification et gestion des tokens JWT'},
+        {'name': 'Utilisateurs', 'description': 'Gestion des profils utilisateurs'},
+        {'name': 'Locations', 'description': 'Découpage administratif du Togo (régions, préfectures, communes)'},
+        {'name': 'Documents', 'description': 'Marketplace de documents techniques agricoles'},
+        {'name': 'Paiements', 'description': 'Intégration Fedapay pour paiements mobiles'},
+        {'name': 'Missions', 'description': 'Recrutement d\'agronomes et gestion des missions'},
+        {'name': 'Emplois', 'description': 'Emploi saisonnier et contrats d\'ouvriers agricoles'},
+        {'name': 'Préventes', 'description': 'Engagement de vente de production future'},
+        {'name': 'Institutionnel', 'description': 'Dashboards pour partenaires gouvernementaux'},
+        {'name': 'Notifications', 'description': 'Système de notifications push et email'},
+        {'name': 'Messagerie', 'description': 'Messagerie interne entre utilisateurs'},
+        {'name': 'Évaluations', 'description': 'Système d\'évaluation et de notation'},
+    ],
 }
 
 
 # CORS Configuration
 CORS_ALLOWED_ORIGINS = env.list('CORS_ALLOWED_ORIGINS', default=[])
 CORS_ALLOW_CREDENTIALS = True
+
+# CSRF Trusted Origins (obligatoire Django 4.x pour POST cross-origin via HTTPS)
+CSRF_TRUSTED_ORIGINS = env.list('CSRF_TRUSTED_ORIGINS', default=[])
 
 
 # Redis Configuration
@@ -326,9 +366,17 @@ ALLOWED_UPLOAD_EXTENSIONS = [
 # Cloud Storage Configuration
 USE_S3 = env.bool('USE_S3', default=False)
 USE_CLOUDINARY = env.bool('USE_CLOUDINARY', default=False)
+USE_SUPABASE = env.bool('USE_SUPABASE', default=False)
+
+# Supabase Storage Configuration (si USE_SUPABASE=True)
+if USE_SUPABASE:
+    SUPABASE_URL = env('SUPABASE_URL', default='')
+    SUPABASE_SERVICE_KEY = env('SUPABASE_SERVICE_KEY', default='')
+    SUPABASE_STORAGE_BUCKET = env('SUPABASE_STORAGE_BUCKET', default='documents')
+    DEFAULT_FILE_STORAGE = 'apps.core.supabase_storage.SupabaseStorage'
 
 # AWS S3 Configuration (si USE_S3=True)
-if USE_S3:
+elif USE_S3:
     AWS_ACCESS_KEY_ID = env('AWS_ACCESS_KEY_ID', default='')
     AWS_SECRET_ACCESS_KEY = env('AWS_SECRET_ACCESS_KEY', default='')
     AWS_STORAGE_BUCKET_NAME = env('AWS_STORAGE_BUCKET_NAME', default='')
@@ -367,7 +415,12 @@ X_FRAME_OPTIONS = 'DENY'
 ENCRYPTION_KEY = env('ENCRYPTION_KEY', default='')
 
 
-# Logging Configuration
+# ============================================
+# TASK-7.2: Logging structuré JSON
+# ============================================
+
+LOG_DIR = BASE_DIR / 'logs'
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -376,25 +429,99 @@ LOGGING = {
             'format': '{levelname} {asctime} {module} {message}',
             'style': '{',
         },
+        'json': {
+            '()': 'pythonjsonlogger.jsonlogger.JsonFormatter',
+            'format': '%(asctime)s %(name)s %(levelname)s %(message)s',
+            'rename_fields': {
+                'asctime': 'timestamp',
+                'levelname': 'level',
+            },
+        },
+    },
+    'filters': {
+        'require_debug_false': {
+            '()': 'django.utils.log.RequireDebugFalse',
+        },
     },
     'handlers': {
         'console': {
             'class': 'logging.StreamHandler',
             'formatter': 'verbose',
         },
-        'file': {
-            'class': 'logging.FileHandler',
-            'filename': BASE_DIR / 'logs' / 'haroo.log',
-            'formatter': 'verbose',
+        # Log applicatif principal (JSON, rotation 10MB x 10 fichiers)
+        'app_file': {
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': LOG_DIR / 'app.log',
+            'maxBytes': 10 * 1024 * 1024,  # 10 MB
+            'backupCount': 10,
+            'formatter': 'json',
+            'encoding': 'utf-8',
+        },
+        # Log des erreurs uniquement
+        'error_file': {
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': LOG_DIR / 'errors.log',
+            'maxBytes': 10 * 1024 * 1024,
+            'backupCount': 10,
+            'formatter': 'json',
+            'level': 'ERROR',
+            'encoding': 'utf-8',
+        },
+        # Log de sécurité (auth, rate limiting, etc.)
+        'security_file': {
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': LOG_DIR / 'security.log',
+            'maxBytes': 10 * 1024 * 1024,
+            'backupCount': 10,
+            'formatter': 'json',
+            'encoding': 'utf-8',
+        },
+        # Log des requêtes HTTP
+        'request_file': {
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': LOG_DIR / 'requests.log',
+            'maxBytes': 10 * 1024 * 1024,
+            'backupCount': 10,
+            'formatter': 'json',
+            'encoding': 'utf-8',
         },
     },
     'root': {
-        'handlers': ['console', 'file'],
+        'handlers': ['console', 'app_file'],
         'level': 'INFO',
     },
     'loggers': {
         'django': {
-            'handlers': ['console', 'file'],
+            'handlers': ['console', 'app_file', 'error_file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'django.request': {
+            'handlers': ['error_file'],
+            'level': 'ERROR',
+            'propagate': True,
+        },
+        # Requêtes HTTP (RequestLoggingMiddleware)
+        'haroo.requests': {
+            'handlers': ['request_file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        # Erreurs applicatives
+        'haroo.errors': {
+            'handlers': ['error_file', 'console'],
+            'level': 'ERROR',
+            'propagate': False,
+        },
+        # Événements de sécurité
+        'haroo.security': {
+            'handlers': ['security_file', 'console'],
+            'level': 'WARNING',
+            'propagate': False,
+        },
+        # Performance
+        'haroo.performance': {
+            'handlers': ['app_file'],
             'level': 'INFO',
             'propagate': False,
         },

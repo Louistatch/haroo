@@ -1,9 +1,27 @@
+from django import forms
 from django.contrib import admin
 from .models import DocumentTemplate, DocumentTechnique, AchatDocument, DownloadLog
 
 
+class DocumentTemplateForm(forms.ModelForm):
+    class Meta:
+        model = DocumentTemplate
+        fields = '__all__'
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['variables_requises'].required = False
+
+    def clean_variables_requises(self):
+        val = self.cleaned_data.get('variables_requises')
+        if val is None or val == '' or val == []:
+            return []
+        return val
+
+
 @admin.register(DocumentTemplate)
 class DocumentTemplateAdmin(admin.ModelAdmin):
+    form = DocumentTemplateForm
     list_display = ['titre', 'type_document', 'format_fichier', 'version', 'created_at']
     list_filter = ['type_document', 'format_fichier']
     search_fields = ['titre', 'description']

@@ -1,7 +1,10 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { me, updateProfile, changePassword, logout } from "../api/auth";
+import { uploadProfilePhoto, validateFile } from "../api/storage";
+import { getRegions, getPrefectures, getCantons, Region, Prefecture, Canton } from "../api/locations";
+import AcheteurProfileForm from "../components/AcheteurProfileForm";
 
 const IconUser = () => <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="6" r="4" stroke="currentColor" strokeWidth="1.4"/><path d="M2 18c0-4.4 3.6-8 8-8s8 3.6 8 8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/></svg>;
 const IconPhone = () => <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M3 2.5A1.5 1.5 0 014.5 1h1a2 2 0 012 2v1a2 2 0 01-2 2H4L3 8s1 6 7 7c6-1 7-7 7-7l-1-2h-1.5a2 2 0 01-2-2V3a2 2 0 012-2h1A1.5 1.5 0 0117 2.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/></svg>;
@@ -48,6 +51,181 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
+const IconMap = () => <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 17s-6-4.35-6-8.5a6 6 0 0112 0C16 12.65 10 17 10 17z" stroke="currentColor" strokeWidth="1.4"/><circle cx="10" cy="8.5" r="2" stroke="currentColor" strokeWidth="1.4"/></svg>;
+
+function ExploitationSection({ user, onUpdate }: { user: any; onUpdate: (u: any) => void }) {
+  const profile = user.exploitant_profile;
+  const [editExploit, setEditExploit] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [msg, setMsg] = useState("");
+  const [err, setErr] = useState("");
+
+  // Location cascade
+  const [regions, setRegions] = useState<Region[]>([]);
+  const [prefectures, setPrefectures] = useState<Prefecture[]>([]);
+  const [cantons, setCantons] = useState<Canton[]>([]);
+  const [selRegion, setSelRegion] = useState<number | "">("");
+  const [selPrefecture, setSelPrefecture] = useState<number | "">("");
+  const [selCanton, setSelCanton] = useState<number | "">(profile?.canton_principal || "");
+
+  const [superficie, setSuperficie] = useState(profile?.superficie_totale || "");
+  const [gpsLat, setGpsLat] = useState(profile?.coordonnees_gps?.lat || "");
+  const [gpsLon, setGpsLon] = useState(profile?.coordonnees_gps?.lon || "");
+  const [cultures, setCultures] = useState((profile?.cultures_actuelles || []).join(", "));
+
+  useEffect(() => { getRegions().then(setRegions).catch(() => {}); }, []);
+
+  useEffect(() => {
+    if (selRegion) {
+      getPrefectures({ region: selRegion }).then(setPrefectures).catch(() => {});
+      setSelPrefecture(""); setSelCanton(""); setCantons([]);
+    }
+  }, [selRegion]);
+
+  useEffect(() => {
+    if (selPrefecture) {
+      getCantons({ prefecture: selPrefecture }).then(setCantons).catch(() => {});
+      setSelCanton("");
+    }
+  }, [selPrefecture]);
+
+  const handleGetGPS = () => {
+    if (!navigator.geolocation) { setErr("Géolocalisation non supportée"); return; }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => { setGpsLat(pos.coords.latitude.toFixed(6)); setGpsLon(pos.coords.longitude.toFixed(6)); },
+      () => setErr("Impossible d'obtenir la position GPS"),
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  };
+
+  const handleSave = async () => {
+    if (!selCanton) { setErr("Veuillez sélectionner un canton"); return; }
+    if (!superficie || parseFloat(superficie) <= 0) { setErr("Veuillez renseigner la superficie"); return; }
+    setSaving(true); setErr(""); setMsg("");
+    try {
+      const payload: any = {
+        exploitant_profile: {
+          canton_principal: Number(selCanton),
+          superficie_totale: parseFloat(superficie),
+          cultures_actuelles: cultures.split(",").map((c: string) => c.trim()).filter(Boolean),
+        }
+      };
+      if (gpsLat && gpsLon) {
+        payload.exploitant_profile.coordonnees_gps = { lat: parseFloat(gpsLat), lon: parseFloat(gpsLon) };
+      }
+      const res = await updateProfile(payload);
+      onUpdate(res.user || { ...user, exploitant_profile: { ...profile, ...payload.exploitant_profile } });
+      setMsg("Profil d'exploitation mis à jour");
+      setEditExploit(false);
+      setTimeout(() => setMsg(""), 3000);
+    } catch (ex: any) {
+      setErr(ex?.response?.data?.detail || ex?.response?.data?.exploitant_profile?.canton_principal?.[0] || "Erreur lors de la mise à jour");
+    } finally { setSaving(false); }
+  };
+
+  const isComplete = profile && profile.canton_principal && parseFloat(profile.superficie_totale) > 0;
+  const statusColor = isComplete ? "#16a34a" : "#d97706";
+  const statusLabel = isComplete ? "Profil complet" : "À compléter";
+  const verificationLabels: Record<string, { label: string; color: string }> = {
+    NON_VERIFIE: { label: "Non vérifié", color: "#d97706" },
+    EN_ATTENTE: { label: "En attente", color: "#2563eb" },
+    VERIFIE: { label: "Vérifié", color: "#16a34a" },
+    REJETE: { label: "Rejeté", color: "#dc2626" },
+  };
+  const verif = verificationLabels[profile?.statut_verification] || verificationLabels.NON_VERIFIE;
+
+  return (
+    <div style={{ background: "var(--surface)", border: `1.5px solid ${isComplete ? "var(--border)" : "#d9770640"}`, borderRadius: "16px", padding: "1.5rem", marginBottom: "1rem" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "1.25rem" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+          <div style={{ color: "var(--text-muted)" }}><IconMap /></div>
+          <span style={{ fontWeight: 700, color: "var(--text)", fontSize: "0.92rem" }}>Mon exploitation</span>
+          <span style={{ background: `${statusColor}15`, color: statusColor, padding: "0.15rem 0.55rem", borderRadius: "100px", fontSize: "0.72rem", fontWeight: 700 }}>{statusLabel}</span>
+        </div>
+        <button onClick={() => setEditExploit(!editExploit)}
+          style={{ padding: "0.4rem 0.8rem", borderRadius: "8px", border: "1px solid var(--border)", background: editExploit ? "var(--bg)" : "var(--primary)", color: editExploit ? "var(--text-secondary)" : "white", fontWeight: 600, fontSize: "0.8rem", cursor: "pointer" }}>
+          {editExploit ? "Annuler" : "Modifier"}
+        </button>
+      </div>
+
+      {msg && <div style={{ padding: "0.6rem 0.8rem", background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: "8px", color: "#16a34a", fontSize: "0.85rem", fontWeight: 600, marginBottom: "0.75rem" }}>{msg}</div>}
+      {err && <div style={{ padding: "0.6rem 0.8rem", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: "8px", color: "#ef4444", fontSize: "0.85rem", fontWeight: 500, marginBottom: "0.75rem" }}>{err}</div>}
+
+      {!isComplete && !editExploit && (
+        <div style={{ padding: "0.8rem 1rem", background: "#fffbeb", border: "1px solid #fde68a", borderRadius: "10px", marginBottom: "1rem", fontSize: "0.85rem", color: "#92400e", lineHeight: 1.5 }}>
+          ⚠️ Veuillez compléter votre profil d'exploitation (canton, superficie) pour pouvoir publier des offres d'emploi ou accéder aux marchés de proximité.
+        </div>
+      )}
+
+      {!editExploit ? (
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
+          {[
+            ["Superficie", profile?.superficie_totale ? `${parseFloat(profile.superficie_totale).toFixed(1)} ha` : "—"],
+            ["Canton", profile?.canton_principal_nom || "—"],
+            ["Vérification", verif.label],
+            ["GPS", profile?.coordonnees_gps?.lat ? `${parseFloat(profile.coordonnees_gps.lat).toFixed(4)}, ${parseFloat(profile.coordonnees_gps.lon).toFixed(4)}` : "—"],
+            ["Cultures", (profile?.cultures_actuelles || []).join(", ") || "—"],
+          ].map(([k, v], i) => (
+            <div key={k} style={{ padding: "0.75rem", background: "var(--bg)", borderRadius: "10px", gridColumn: i === 4 ? "1 / -1" : undefined }}>
+              <div style={{ fontSize: "0.7rem", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "0.25rem" }}>{k}</div>
+              <div style={{ fontWeight: 600, color: k === "Vérification" ? verif.color : "var(--text)", fontSize: "0.88rem" }}>{v}</div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: "0.85rem" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "0.75rem" }}>
+            <Field label="Région">
+              <select value={selRegion} onChange={e => setSelRegion(e.target.value ? Number(e.target.value) : "")} style={inputBase}>
+                <option value="">— Choisir —</option>
+                {regions.map(r => <option key={r.id} value={r.id}>{r.nom}</option>)}
+              </select>
+            </Field>
+            <Field label="Préfecture">
+              <select value={selPrefecture} onChange={e => setSelPrefecture(e.target.value ? Number(e.target.value) : "")} style={inputBase} disabled={!selRegion}>
+                <option value="">— Choisir —</option>
+                {prefectures.map(p => <option key={p.id} value={p.id}>{p.nom}</option>)}
+              </select>
+            </Field>
+            <Field label="Canton">
+              <select value={selCanton} onChange={e => setSelCanton(e.target.value ? Number(e.target.value) : "")} style={inputBase} disabled={!selPrefecture}>
+                <option value="">— Choisir —</option>
+                {cantons.map(c => <option key={c.id} value={c.id}>{c.nom}</option>)}
+              </select>
+            </Field>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "0.75rem" }}>
+            <Field label="Superficie (ha)">
+              <input type="number" step="0.1" min="0.01" value={superficie} onChange={e => setSuperficie(e.target.value)} style={inputBase} placeholder="Ex: 5.5" />
+            </Field>
+            <Field label="Latitude GPS">
+              <input type="number" step="0.0001" value={gpsLat} onChange={e => setGpsLat(e.target.value)} style={inputBase} placeholder="Ex: 6.1725" />
+            </Field>
+            <Field label="Longitude GPS">
+              <input type="number" step="0.0001" value={gpsLon} onChange={e => setGpsLon(e.target.value)} style={inputBase} placeholder="Ex: 1.2314" />
+            </Field>
+          </div>
+          <div style={{ display: "flex", gap: "0.75rem", alignItems: "flex-end" }}>
+            <div style={{ flex: 1 }}>
+              <Field label="Cultures actuelles (séparées par des virgules)">
+                <input value={cultures} onChange={e => setCultures(e.target.value)} style={inputBase} placeholder="Maïs, Soja, Riz..." />
+              </Field>
+            </div>
+            <button type="button" onClick={handleGetGPS}
+              style={{ padding: "0.75rem 1rem", borderRadius: "10px", border: "1px solid var(--border)", background: "var(--bg)", color: "var(--text)", fontWeight: 600, fontSize: "0.82rem", cursor: "pointer", whiteSpace: "nowrap" }}>
+              📍 Ma position
+            </button>
+          </div>
+          <button onClick={handleSave} disabled={saving}
+            style={{ padding: "0.8rem", background: "var(--primary)", color: "white", border: "none", borderRadius: "10px", fontWeight: 700, fontSize: "0.95rem", cursor: saving ? "not-allowed" : "pointer", opacity: saving ? 0.8 : 1 }}>
+            {saving ? "Enregistrement..." : "Enregistrer l'exploitation"}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function Profile() {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -68,6 +246,27 @@ export default function Profile() {
   const [pwdSaving, setPwdSaving] = useState(false);
   const [pwdMsg, setPwdMsg] = useState("");
   const [pwdErr, setPwdErr] = useState("");
+
+  // Photo upload
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [photoUrl, setPhotoUrl] = useState<string>("");
+  const [photoUploading, setPhotoUploading] = useState(false);
+
+  async function handlePhotoUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const err = validateFile(file, 'image');
+    if (err) { setSaveErr(err); return; }
+    setPhotoUploading(true); setSaveErr("");
+    try {
+      const url = await uploadProfilePhoto(file, user?.id || 'anon');
+      setPhotoUrl(url);
+      setSaveMsg("Photo de profil mise à jour");
+      setTimeout(() => setSaveMsg(""), 3000);
+    } catch (ex: any) {
+      setSaveErr(ex?.message || "Erreur upload photo");
+    } finally { setPhotoUploading(false); }
+  }
 
   useEffect(() => {
     me()
@@ -126,8 +325,23 @@ export default function Profile() {
         {/* ── Header card ── */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.45 }}
           style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "20px", padding: "2rem", marginBottom: "1.25rem", display: "flex", alignItems: "center", gap: "1.5rem" }}>
-          <div style={{ width: 70, height: 70, borderRadius: "50%", background: `${typeConf.color}18`, border: `2px solid ${typeConf.color}40`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-            <span style={{ color: typeConf.color, fontWeight: 800, fontSize: "1.6rem", letterSpacing: "-0.02em" }}>{getInitials(user)}</span>
+          <div
+            onClick={() => fileInputRef.current?.click()}
+            style={{ width: 70, height: 70, borderRadius: "50%", background: `${typeConf.color}18`, border: `2px solid ${typeConf.color}40`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, cursor: "pointer", position: "relative", overflow: "hidden" }}
+            title="Changer la photo de profil"
+          >
+            {photoUrl ? (
+              <img src={photoUrl} alt="Photo de profil" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" }} />
+            ) : (
+              <span style={{ color: typeConf.color, fontWeight: 800, fontSize: "1.6rem", letterSpacing: "-0.02em" }}>{getInitials(user)}</span>
+            )}
+            {photoUploading && (
+              <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.4)", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "50%" }}>
+                <motion.div animate={{ rotate: 360 }} transition={{ duration: 0.8, repeat: Infinity, ease: "linear" }}
+                  style={{ width: 20, height: 20, border: "2px solid #fff4", borderTop: "2px solid #fff", borderRadius: "50%" }} />
+              </div>
+            )}
+            <input ref={fileInputRef} type="file" accept="image/jpeg,image/png" onChange={handlePhotoUpload} style={{ display: "none" }} />
           </div>
           <div style={{ flex: 1 }}>
             <h1 style={{ margin: "0 0 0.25rem", fontSize: "1.4rem", fontWeight: 800, color: "var(--text)", letterSpacing: "-0.02em" }}>
@@ -250,6 +464,49 @@ export default function Profile() {
               </div>
             </div>
           </div>
+
+          {/* ── Exploitation Profile (EXPLOITANT only) ── */}
+          {user.user_type === 'EXPLOITANT' && <ExploitationSection user={user} onUpdate={(u: any) => setUser(u)} />}
+
+          {/* ── Acheteur Profile (ACHETEUR only) ── */}
+          {user.user_type === 'ACHETEUR' && (
+            <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
+              style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "16px", padding: "1.5rem" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1.25rem" }}>
+                <div style={{ color: "var(--text-muted)" }}><IconMap /></div>
+                <span style={{ fontWeight: 700, color: "var(--text)", fontSize: "0.92rem" }}>Profil Acheteur</span>
+                {user.acheteur_profile?.profil_complet && (
+                  <span style={{ background: "#dcfce7", color: "#16a34a", padding: "0.15rem 0.55rem", borderRadius: "100px", fontSize: "0.72rem", fontWeight: 700 }}>Complet</span>
+                )}
+              </div>
+              <AcheteurProfileForm 
+                profile={user.acheteur_profile}
+                onSave={async (data) => {
+                  console.log('Données à sauvegarder:', data);
+                  setSaving(true);
+                  setSaveErr("");
+                  setSaveMsg("");
+                  try {
+                    const res = await updateProfile({ acheteur_profile: data });
+                    console.log('Réponse de mise à jour:', res);
+                    setUser(res.user || { ...user, acheteur_profile: { ...user.acheteur_profile, ...data, profil_complet: true } });
+                    setSaveMsg("Profil acheteur mis à jour avec succès");
+                  } catch (err: any) {
+                    console.error('Erreur de mise à jour:', err);
+                    const d = err?.response?.data;
+                    const errorMsg = d?.detail || d?.acheteur_profile?.region?.[0] || d?.acheteur_profile?.prefecture?.[0] || d?.acheteur_profile?.canton?.[0] || "Erreur lors de la mise à jour du profil";
+                    setSaveErr(errorMsg);
+                    console.error('Message d\'erreur:', errorMsg);
+                  } finally {
+                    setSaving(false);
+                  }
+                }}
+                isSaving={saving}
+                saveError={saveErr}
+                saveSuccess={saveMsg}
+              />
+            </motion.div>
+          )}
 
           {/* Security */}
           <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "16px", padding: "1.5rem" }}>

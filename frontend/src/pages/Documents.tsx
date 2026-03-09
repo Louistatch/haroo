@@ -28,6 +28,13 @@ const CULTURE_COLORS: Record<string, string> = {
   Oignon: '#f97316', Arachide: '#d97706', Niébé: '#10b981', Sorgho: '#6366f1',
 };
 
+const CULTURE_IMAGES: Record<string, string> = {
+  Maïs: '/images/cultures/mais.jpg', Riz: '/images/cultures/riz.jpg',
+  Manioc: '/images/cultures/manioc.jpg', Tomate: '/images/cultures/tomate.jpg',
+  Oignon: '/images/cultures/oignon.jpg', Arachide: '/images/cultures/arachide.jpg',
+  Soja: '/images/cultures/soja.jpg', Coton: '/images/cultures/coton.jpg',
+};
+
 const DocumentIcon = () => (
   <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
     <rect width="40" height="40" rx="10" fill="var(--primary)" fillOpacity="0.1" />
@@ -61,7 +68,7 @@ const cardVariants = {
   hidden: { opacity: 0, y: 24 },
   visible: (i: number) => ({
     opacity: 1, y: 0,
-    transition: { delay: i * 0.06, duration: 0.4, ease: [0.22, 1, 0.36, 1] },
+    transition: { delay: i * 0.06, duration: 0.4, ease: [0.22, 1, 0.36, 1] as const },
   }),
 };
 
@@ -198,6 +205,9 @@ export default function Documents() {
           position: 'relative',
           overflow: 'hidden',
         }}>
+          {/* Background image */}
+          <div style={{ position: 'absolute', inset: 0, backgroundImage: "url('/images/hero/market.jpg')", backgroundSize: 'cover', backgroundPosition: 'center', opacity: 0.15 }} />
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg, rgba(5,46,22,0.9) 0%, rgba(20,83,45,0.85) 50%, rgba(22,101,52,0.82) 100%)' }} />
           <div style={{
             position: 'absolute', inset: 0,
             backgroundImage: 'radial-gradient(circle at 20% 50%, rgba(74,222,128,0.08) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(34,197,94,0.06) 0%, transparent 40%)',
@@ -350,7 +360,16 @@ export default function Documents() {
                         )}
 
                         <div style={{ marginBottom: '1rem', marginTop: '0.25rem' }}>
-                          <DocumentIcon />
+                          {CULTURE_IMAGES[doc.culture] ? (
+                            <div style={{ width: '100%', height: '120px', borderRadius: '12px', overflow: 'hidden', marginBottom: '0.25rem' }}>
+                              <img src={CULTURE_IMAGES[doc.culture]} alt={doc.culture}
+                                style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.3s ease' }}
+                                onMouseOver={e => (e.currentTarget.style.transform = 'scale(1.05)')}
+                                onMouseOut={e => (e.currentTarget.style.transform = 'scale(1)')} />
+                            </div>
+                          ) : (
+                            <DocumentIcon />
+                          )}
                         </div>
 
                         <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--text)', marginBottom: '0.6rem', lineHeight: 1.4, paddingRight: doc.is_purchased ? '70px' : '0' }}>

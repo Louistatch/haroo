@@ -14,7 +14,20 @@ class PreventeViewSet(viewsets.ModelViewSet):
     """
     ViewSet pour gérer les préventes agricoles
     """
-    queryset = PreventeAgricole.objects.all()
+
+    def get_queryset(self):
+        qs = PreventeAgricole.objects.all().select_related('exploitant', 'canton_production')
+        
+        # Filter by statut
+        statut = self.request.query_params.get('statut')
+        if statut:
+            qs = qs.filter(statut=statut)
+        
+        # "mine" filter — exploitant sees their own preventes
+        if self.request.query_params.get('mine') == 'true' and self.request.user.is_authenticated:
+            qs = qs.filter(exploitant=self.request.user)
+        
+        return qs
 
     def get_serializer_class(self):
         if self.action == 'list':

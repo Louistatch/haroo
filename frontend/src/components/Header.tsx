@@ -7,7 +7,7 @@ interface HeaderProps {
   isAuthenticated: boolean;
 }
 
-function getUserInfo(): { initials: string; name: string; type: string } | null {
+function getUserInfo(): { initials: string; name: string; type: string; isAdmin: boolean } | null {
   try {
     const token = localStorage.getItem("access_token");
     if (!token) return null;
@@ -21,8 +21,9 @@ function getUserInfo(): { initials: string; name: string; type: string } | null 
       OUVRIER: "Ouvrier",
       ACHETEUR: "Acheteur",
       INSTITUTION: "Institution",
+      ADMIN: "Administrateur",
     };
-    return { initials, name: username, type: TYPE_LABELS[p.user_type] || p.user_type || "" };
+    return { initials, name: username, type: TYPE_LABELS[p.user_type] || p.user_type || "", isAdmin: p.user_type === 'ADMIN' || p.is_staff === true };
   } catch { return null; }
 }
 
@@ -77,24 +78,31 @@ function LogoIcon() {
 }
 
 const PRIMARY_NAV = [
-  { to: "/home",        label: "Tableau de bord", Icon: IconDashboard },
-  { to: "/missions",    label: "Missions",         Icon: IconMissions  },
-  { to: "/documents",   label: "Documents",        Icon: IconDocuments },
-  { to: "/agronomists", label: "Agronomes",        Icon: IconAgronomes },
-  { to: "/jobs",        label: "Emplois",         Icon: IconMissions },
-  { to: "/messages",    label: "Messages",         Icon: IconMail },
+  { to: "/home",        label: "Tableau de bord", Icon: IconDashboard, roles: ['EXPLOITANT', 'AGRONOME', 'INSTITUTION', 'ADMIN'] },
+  { to: "/missions",    label: "Missions",         Icon: IconMissions,  roles: ['EXPLOITANT', 'AGRONOME', 'ADMIN'] },
+  { to: "/documents",   label: "Documents",        Icon: IconDocuments, roles: ['EXPLOITANT', 'AGRONOME', 'INSTITUTION', 'ADMIN'] },
+  { to: "/elearning",   label: "Formation",        Icon: IconDocuments, roles: ['EXPLOITANT', 'AGRONOME', 'OUVRIER', 'ACHETEUR', 'INSTITUTION', 'ADMIN'] },
+  { to: "/agronomists", label: "Agronomes",        Icon: IconAgronomes, roles: ['EXPLOITANT', 'ADMIN'] },
+  { to: "/jobs",        label: "Emplois",         Icon: IconMissions,  roles: ['EXPLOITANT', 'OUVRIER', 'ADMIN'] },
+  { to: "/exploitants", label: "Exploitants",     Icon: IconAgronomes, roles: ['OUVRIER'] },
+  { to: "/ouvriers",    label: "Ouvriers",        Icon: IconAgronomes, roles: ['ACHETEUR'] },
+  { to: "/presales",    label: "Préventes",       Icon: IconBag,       roles: ['EXPLOITANT', 'ACHETEUR', 'ADMIN'] },
+  { to: "/markets",     label: "Marchés",         Icon: IconAgronomes, roles: ['EXPLOITANT', 'ACHETEUR', 'ADMIN'] },
+  { to: "/messages",    label: "Messages",         Icon: IconMail,      roles: ['EXPLOITANT', 'AGRONOME', 'OUVRIER', 'ACHETEUR', 'ADMIN'] },
 ];
 
 const USER_MENU = [
   { to: "/me",        label: "Mon profil",  Icon: IconProfile },
   { to: "/purchases", label: "Mes achats",  Icon: IconBag     },
-  { to: "/ratings",   label: "Mes avis",   Icon: IconStar    },
   { to: "/security",  label: "Sécurité",   Icon: IconShield  },
 ];
 
 const GUEST_NAV = [
+  { to: "/",           label: "Accueil",    Icon: IconDashboard },
   { to: "/documents",   label: "Documents", Icon: IconDocuments },
+  { to: "/elearning",   label: "Formation", Icon: IconDocuments },
   { to: "/agronomists", label: "Agronomes", Icon: IconAgronomes },
+  { to: "/markets",     label: "Marchés",   Icon: IconAgronomes },
 ];
 
 /* Stagger variants for mobile items */
@@ -122,7 +130,27 @@ export const Header: React.FC<HeaderProps> = ({ isAuthenticated }) => {
   const isLanding   = location.pathname === "/";
   const onScroll    = scrolled || !isLanding;
   const userInfo    = isAuthenticated ? getUserInfo() : null;
-  const mainNav     = isAuthenticated ? PRIMARY_NAV : GUEST_NAV;
+  const mainNav     = isAuthenticated
+    ? (() => {
+        const userType = userInfo?.type || '';
+        // Extraire le type d'utilisateur en majuscules
+        const userTypeKey = userType.toUpperCase().includes('EXPLOITANT') ? 'EXPLOITANT'
+          : userType.toUpperCase().includes('AGRONOME') ? 'AGRONOME'
+          : userType.toUpperCase().includes('OUVRIER') ? 'OUVRIER'
+          : userType.toUpperCase().includes('ACHETEUR') ? 'ACHETEUR'
+          : userType.toUpperCase().includes('INSTITUTION') ? 'INSTITUTION'
+          : userType.toUpperCase().includes('ADMIN') ? 'ADMIN'
+          : '';
+        
+        let filteredNav = PRIMARY_NAV.filter(item => !item.roles || item.roles.includes(userTypeKey));
+        
+        if (userInfo?.isAdmin) {
+          filteredNav = [...filteredNav, { to: "/admin", label: "Admin", Icon: IconShield, roles: ['ADMIN'] }];
+        }
+        
+        return filteredNav;
+      })()
+    : GUEST_NAV;
 
   useEffect(() => {
     const fn = () => setScrolled(window.scrollY > 12);

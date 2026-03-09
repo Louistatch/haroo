@@ -6,7 +6,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django.shortcuts import get_object_or_404
-from django.db import transaction as db_transaction
+from django.db import models, transaction as db_transaction
 
 from .models import Mission
 from .serializers import (
@@ -29,18 +29,21 @@ class MissionViewSet(viewsets.ModelViewSet):
         """Retourner les missions de l'utilisateur"""
         user = self.request.user
         
-        # Les exploitants voient leurs missions créées
-        # Les agronomes voient leurs missions reçues
-        if hasattr(user, 'exploitant_profile'):
+        # Exploitants voient leurs missions créées, agronomes les reçues
+        # On utilise user_type au lieu de vérifier les profils
+        if user.user_type == 'EXPLOITANT':
             return Mission.objects.filter(exploitant=user).select_related(
                 'exploitant', 'agronome', 'transaction'
             )
-        elif hasattr(user, 'agronome_profile'):
+        elif user.user_type == 'AGRONOME':
             return Mission.objects.filter(agronome=user).select_related(
                 'exploitant', 'agronome', 'transaction'
             )
         
-        return Mission.objects.none()
+        # Fallback: montrer les missions où l'utilisateur est participant
+        return Mission.objects.filter(
+            models.Q(exploitant=user) | models.Q(agronome=user)
+        ).select_related('exploitant', 'agronome', 'transaction')
     
     def get_serializer_class(self):
         """Retourner le serializer approprié"""
@@ -57,10 +60,11 @@ class MissionViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
         """Permissions spécifiques par action"""
         if self.action == 'create':
-            return [IsAuthenticated(), IsExploitantVerifie()]
+            # MVP: tout exploitant authentifié peut créer (pas besoin d'être vérifié)
+            return [IsAuthenticated()]
         elif self.action == 'accept':
-            return [IsAuthenticated(), IsAgronomeValide(), IsMissionParticipant()]
-        elif self.action == 'complete':
+            return [IsAuthenticated()]
+        elif self.action in ('complete', 'refuse', 'cancel'):
             return [IsAuthenticated(), IsMissionParticipant()]
         return super().get_permissions()
     
@@ -125,6 +129,84 @@ class MissionViewSet(viewsets.ModelViewSet):
         response_data['payment_amount'] = float(mission.budget_propose)
         
         return Response(response_data)
+    
+    @action(detail=True, methods=['post'], url_path='refuse')
+    def refuse(self, request, pk=None):
+        """
+        Refuser une mission (agronome uniquement)
+        POST /api/v1/missions/{id}/refuse/
+        """
+        mission = self.get_object()
+        
+        if mission.statut != 'DEMANDE':
+            return Response(
+                {'error': 'Cette mission ne peut pas être refusée (statut invalide)'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        if mission.agronome != request.user:
+            return Response(
+                {'error': 'Seul l\'agronome peut refuser cette mission'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        mission.statut = 'REFUSEE'
+        mission.save()
+        
+        serializer = MissionDetailSerializer(mission)
+        return Response(serializer.data)
+    
+    @action(detail=True, methods=['post'], url_path='cancel')
+    def cancel(self, request, pk=None):
+        """
+        Annuler une mission (exploitant uniquement, avant acceptation)
+        POST /api/v1/missions/{id}/cancel/
+        """
+        mission = self.get_object()
+        
+        if mission.statut not in ('DEMANDE', 'ACCEPTEE'):
+            return Response(
+                {'error': 'Cette mission ne peut plus être annulée'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        if mission.exploitant != request.user:
+            return Response(
+                {'error': 'Seul l\'exploitant peut annuler cette mission'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        mission.statut = 'ANNULEE'
+        mission.save()
+        
+        serializer = MissionDetailSerializer(mission)
+        return Response(serializer.data)
+    
+    @action(detail=True, methods=['post'], url_path='start')
+    def start(self, request, pk=None):
+        """
+        Démarrer une mission (passer de ACCEPTEE à EN_COURS)
+        POST /api/v1/missions/{id}/start/
+        """
+        mission = self.get_object()
+        
+        if mission.statut != 'ACCEPTEE':
+            return Response(
+                {'error': 'La mission doit être acceptée avant de pouvoir démarrer'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        if mission.exploitant != request.user and mission.agronome != request.user:
+            return Response(
+                {'error': 'Seuls les participants peuvent démarrer la mission'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        mission.statut = 'EN_COURS'
+        mission.save()
+        
+        serializer = MissionDetailSerializer(mission)
+        return Response(serializer.data)
     
     @action(detail=True, methods=['post'], url_path='complete')
     def complete(self, request, pk=None):

@@ -52,25 +52,36 @@ class Conversation(TimeStampedModel):
 
 class Message(TimeStampedModel):
     conversation = models.ForeignKey(
-        Conversation, 
+        Conversation,
         on_delete=models.CASCADE,
         related_name='messages',
         verbose_name="Conversation"
     )
     expediteur = models.ForeignKey(
-        settings.AUTH_USER_MODEL, 
+        settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT,
         related_name='messages_envoyes',
         verbose_name="Expéditeur"
     )
-    contenu = models.TextField(verbose_name="Contenu")
+    contenu = models.TextField(verbose_name="Contenu", blank=True, default='')
+    fichier = models.FileField(
+        upload_to='messages/fichiers/%Y/%m/',
+        null=True,
+        blank=True,
+        verbose_name="Fichier joint"
+    )
+    nom_fichier = models.CharField(max_length=255, blank=True, default='', verbose_name="Nom du fichier")
+    taille_fichier = models.IntegerField(default=0, verbose_name="Taille du fichier (octets)")
     lu = models.BooleanField(default=False, verbose_name="Lu")
     date_lecture = models.DateTimeField(
-        null=True, 
+        null=True,
         blank=True,
         verbose_name="Date de lecture"
     )
     signale = models.BooleanField(default=False, verbose_name="Signalé")
+    motif_signalement = models.CharField(max_length=255, blank=True, default='', verbose_name="Motif du signalement")
+
+    MAX_FILE_SIZE = 5 * 1024 * 1024  # 5 Mo
 
     class Meta:
         verbose_name = "Message"

@@ -1,5 +1,7 @@
+from django import forms
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
+from apps.locations.models import Region, Prefecture, Canton
 from .models import (
     User,
     ExploitantProfile,
@@ -50,8 +52,58 @@ class ExploitantProfileAdmin(admin.ModelAdmin):
     )
 
 
+class AgronomeProfileForm(forms.ModelForm):
+    region = forms.ModelChoiceField(
+        queryset=Region.objects.all(),
+        required=False,
+        label="Région",
+        help_text="Filtrer les cantons par région"
+    )
+    prefecture = forms.ModelChoiceField(
+        queryset=Prefecture.objects.all(),
+        required=False,
+        label="Préfecture",
+        help_text="Filtrer les cantons par préfecture"
+    )
+
+    class Meta:
+        model = AgronomeProfile
+        fields = '__all__'
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Pré-remplir région/préfecture si le canton est déjà défini
+        if self.instance and self.instance.pk and self.instance.canton_rattachement_id:
+            canton = self.instance.canton_rattachement
+            self.fields['prefecture'].initial = canton.prefecture_id
+            self.fields['region'].initial = canton.prefecture.region_id
+            self.fields['prefecture'].queryset = Prefecture.objects.filter(
+                region=canton.prefecture.region
+            )
+            self.fields['canton_rattachement'].queryset = Canton.objects.filter(
+                prefecture=canton.prefecture
+            )
+        # Si des données POST sont soumises, filtrer dynamiquement
+        if 'region' in self.data:
+            try:
+                region_id = int(self.data.get('region'))
+                self.fields['prefecture'].queryset = Prefecture.objects.filter(region_id=region_id)
+            except (ValueError, TypeError):
+                pass
+        if 'prefecture' in self.data:
+            try:
+                pref_id = int(self.data.get('prefecture'))
+                self.fields['canton_rattachement'].queryset = Canton.objects.filter(prefecture_id=pref_id)
+            except (ValueError, TypeError):
+                pass
+
+    class Media:
+        js = ('admin/js/cascade_location.js',)
+
+
 @admin.register(AgronomeProfile)
 class AgronomeProfileAdmin(admin.ModelAdmin):
+    form = AgronomeProfileForm
     list_display = ['user', 'canton_rattachement', 'statut_validation', 'badge_valide', 'note_moyenne', 'nombre_avis']
     list_filter = ['statut_validation', 'badge_valide', 'canton_rattachement__prefecture__region']
     search_fields = ['user__username', 'user__email', 'user__phone_number']
@@ -61,8 +113,11 @@ class AgronomeProfileAdmin(admin.ModelAdmin):
         ('Utilisateur', {
             'fields': ('user',)
         }),
+        ('Localisation', {
+            'fields': ('region', 'prefecture', 'canton_rattachement')
+        }),
         ('Profil Professionnel', {
-            'fields': ('canton_rattachement', 'specialisations')
+            'fields': ('specialisations',)
         }),
         ('Validation', {
             'fields': ('statut_validation', 'badge_valide', 'date_validation', 'motif_rejet')

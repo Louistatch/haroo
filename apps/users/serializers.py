@@ -8,6 +8,7 @@ from django.core.exceptions import ValidationError
 
 from .services import PasswordValidationService
 from .file_upload import FileUploadService
+from apps.locations.models import Canton
 
 User = get_user_model()
 
@@ -43,7 +44,9 @@ class RegisterSerializer(serializers.Serializer):
     )
     user_type = serializers.ChoiceField(
         choices=User.USER_TYPE_CHOICES,
-        required=True,
+        required=False,
+        allow_blank=True,
+        default='',
         help_text="Type de profil utilisateur"
     )
     first_name = serializers.CharField(
@@ -127,7 +130,7 @@ class EmailRegisterSerializer(serializers.Serializer):
     email = serializers.EmailField(required=True)
     password = serializers.CharField(write_only=True, required=True, style={'input_type': 'password'})
     password_confirm = serializers.CharField(write_only=True, required=True, style={'input_type': 'password'})
-    user_type = serializers.ChoiceField(choices=User.USER_TYPE_CHOICES, required=True)
+    user_type = serializers.ChoiceField(choices=User.USER_TYPE_CHOICES, required=False, allow_blank=True, default='')
 
     def validate_email(self, value):
         if User.objects.filter(email=value).exists():
@@ -280,7 +283,7 @@ class ChangePasswordSerializer(serializers.Serializer):
 
 class ExploitantProfileSerializer(serializers.ModelSerializer):
     """Serializer pour le profil exploitant"""
-    canton_principal_nom = serializers.CharField(source='canton_principal.nom', read_only=True)
+    canton_principal_nom = serializers.CharField(source='canton_principal.nom', read_only=True, default='')
     
     class Meta:
         from .models import ExploitantProfile
@@ -551,14 +554,38 @@ class OuvrierProfileSerializer(serializers.ModelSerializer):
 
 class AcheteurProfileSerializer(serializers.ModelSerializer):
     """Serializer pour le profil acheteur"""
+    region_nom = serializers.CharField(source='region.nom', read_only=True)
+    prefecture_nom = serializers.CharField(source='prefecture.nom', read_only=True)
+    canton_nom = serializers.CharField(source='canton.nom', read_only=True)
+    cantons_intervention_ids = serializers.PrimaryKeyRelatedField(
+        many=True,
+        queryset=Canton.objects.all(),
+        source='cantons_intervention',
+        required=False
+    )
+    cantons_intervention_noms = serializers.SerializerMethodField()
     
     class Meta:
         from .models import AcheteurProfile
         model = AcheteurProfile
         fields = [
             'type_acheteur',
-            'volume_achats_annuel'
+            'telephone',
+            'region',
+            'region_nom',
+            'prefecture',
+            'prefecture_nom',
+            'canton',
+            'canton_nom',
+            'produits_interesses',
+            'cantons_intervention_ids',
+            'cantons_intervention_noms',
+            'volume_achats_annuel',
+            'profil_complet'
         ]
+    
+    def get_cantons_intervention_noms(self, obj):
+        return [c.nom for c in obj.cantons_intervention.all()]
 
 
 class InstitutionProfileSerializer(serializers.ModelSerializer):
@@ -654,9 +681,34 @@ class UserProfileSerializer(serializers.ModelSerializer):
         if profile_data and profile_field:
             profile = getattr(instance, profile_field, None)
             if profile:
+                # Gérer les ManyToMany fields séparément
+                m2m_fields = {}
+                if 'cantons_intervention' in profile_data:
+                    m2m_fields['cantons_intervention'] = profile_data.pop('cantons_intervention')
+                
                 for attr, value in profile_data.items():
                     setattr(profile, attr, value)
                 profile.save()
+                
+                # Mettre à jour les ManyToMany après save
+                for field_name, value in m2m_fields.items():
+                    getattr(profile, field_name).set(value)
+            elif profile_field == 'exploitant_profile':
+                # Auto-créer le profil s'il n'existe pas encore
+                from .models import ExploitantProfile
+                ExploitantProfile.objects.create(user=instance, **profile_data)
+            elif profile_field == 'acheteur_profile':
+                # Auto-créer le profil acheteur s'il n'existe pas encore
+                from .models import AcheteurProfile
+                m2m_fields = {}
+                if 'cantons_intervention' in profile_data:
+                    m2m_fields['cantons_intervention'] = profile_data.pop('cantons_intervention')
+                
+                profile = AcheteurProfile.objects.create(user=instance, **profile_data)
+                
+                # Mettre à jour les ManyToMany après création
+                for field_name, value in m2m_fields.items():
+                    getattr(profile, field_name).set(value)
         
         return instance
 
@@ -722,6 +774,7 @@ class AgronomeDirectorySerializer(serializers.ModelSerializer):
     """
     # Informations utilisateur
     nom_complet = serializers.SerializerMethodField()
+    user_id = serializers.IntegerField(source='user.id', read_only=True)
     
     # Informations de localisation
     canton_nom = serializers.CharField(source='canton_rattachement.nom', read_only=True)
@@ -733,6 +786,7 @@ class AgronomeDirectorySerializer(serializers.ModelSerializer):
         model = AgronomeProfile
         fields = [
             'id',
+            'user_id',
             'nom_complet',
             'specialisations',
             'canton_nom',
