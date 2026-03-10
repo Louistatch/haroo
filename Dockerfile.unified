@@ -47,5 +47,7 @@ RUN SECRET_KEY=build-placeholder \
 
 EXPOSE ${PORT}
 
-CMD python manage.py migrate --noinput && \
-    gunicorn haroo.wsgi:application --bind 0.0.0.0:${PORT} --workers 2 --timeout 120
+CMD echo "=== Running migrations ===" && \
+    python manage.py migrate --noinput 2>&1 && \
+    echo "=== Migrations done, starting gunicorn ===" && \
+    gunicorn haroo.wsgi:application --bind 0.0.0.0:${PORT} --workers 2 --timeout 120 --access-logfile - --error-logfile -

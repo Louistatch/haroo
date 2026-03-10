@@ -4,6 +4,7 @@ from . import views_storage
 from . import views_admin
 
 urlpatterns = [
+    path('ping/', views.ping, name='ping'),  # Lightweight healthcheck (no DB)
     path('health/', views.health_check, name='health-check'),
     path('health/detailed/', views.health_check_detailed, name='health-check-detailed'),
     # AI Assistant

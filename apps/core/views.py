@@ -87,6 +87,11 @@ def health_check(request):
         'status': overall_status,
         'checks': checks,
     }, status=http_status)
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def ping(request):
+    """Lightweight ping for Railway healthcheck — no DB, no cache."""
+    return Response({'status': 'ok'})
 
 
 @extend_schema(
