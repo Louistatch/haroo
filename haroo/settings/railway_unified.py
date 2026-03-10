@@ -77,15 +77,16 @@ CSRF_COOKIE_SAMESITE = 'Lax'
 
 # --- WhiteNoise: serve static + React SPA ---
 MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
 
 # SPA catch-all: serve React index.html for non-API 404s
 MIDDLEWARE.append('apps.core.spa_middleware.SPAMiddleware')
 
 # Django static files dirs (admin CSS, etc.)
-STATICFILES_DIRS = [
-    BASE_DIR / 'static',
-]
+STATICFILES_DIRS = []
+_static_dir = BASE_DIR / 'static'
+if _static_dir.is_dir():
+    STATICFILES_DIRS.append(_static_dir)
 
 # WhiteNoise root: serves files from frontend_dist/ at the site root.
 # This means frontend_dist/index.html → /, frontend_dist/assets/* → /assets/*
@@ -109,7 +110,7 @@ EMAIL_BACKEND = env('EMAIL_BACKEND', default='django.core.mail.backends.console.
 
 # --- Sentry ---
 SENTRY_DSN = env('SENTRY_DSN', default='')
-if SENTRY_DSN:
+if SENTRY_DSN and SENTRY_DSN.startswith('https://'):
     import sentry_sdk
     from sentry_sdk.integrations.django import DjangoIntegration
     sentry_sdk.init(
