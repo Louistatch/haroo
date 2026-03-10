@@ -11,8 +11,10 @@ DEBUG = False
 
 # --- Hosts ---
 RAILWAY_DOMAIN = os.environ.get('RAILWAY_PUBLIC_DOMAIN', '')
-ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=[RAILWAY_DOMAIN, 'localhost'])
+ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=[RAILWAY_DOMAIN, 'localhost', 'healthcheck.railway.app'])
 ALLOWED_HOSTS = [h for h in ALLOWED_HOSTS if h]
+if 'healthcheck.railway.app' not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append('healthcheck.railway.app')
 
 # --- CORS / CSRF ---
 # Same-origin: frontend served from same domain, no CORS needed for API calls.
