@@ -45,9 +45,9 @@ RUN SECRET_KEY=build-placeholder \
     DJANGO_SETTINGS_MODULE=haroo.settings.railway_unified \
     python manage.py collectstatic --noinput 2>/dev/null || true
 
+# Make entrypoint executable (fix line endings from Windows)
+RUN sed -i 's/\r$//' /app/entrypoint.sh && chmod +x /app/entrypoint.sh
+
 EXPOSE ${PORT}
 
-CMD echo "=== Running migrations ===" && \
-    python manage.py migrate --noinput 2>&1 && \
-    echo "=== Migrations done, starting gunicorn ===" && \
-    gunicorn haroo.wsgi:application --bind 0.0.0.0:${PORT} --workers 2 --timeout 120 --access-logfile - --error-logfile -
+CMD ["/app/entrypoint.sh"]
