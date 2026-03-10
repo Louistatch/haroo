@@ -150,6 +150,9 @@ if USE_SUPABASE:
     SUPABASE_SERVICE_KEY = env('SUPABASE_SERVICE_KEY')
     SUPABASE_STORAGE_BUCKET = env('SUPABASE_STORAGE_BUCKET', default='documents')
     DEFAULT_FILE_STORAGE = 'apps.core.supabase_storage.SupabaseStorage'
+    # Supabase handles media only; serve static files via WhiteNoise
+    MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')
+    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 elif USE_S3:
     # Configuration AWS S3

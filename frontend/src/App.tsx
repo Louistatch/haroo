@@ -36,11 +36,13 @@ const Payment = React.lazy(() => import("./pages/Payment"));
 const ChooseProfile = React.lazy(() => import("./pages/ChooseProfile"));
 const OAuthCallbackPage = React.lazy(() => import("./pages/OAuthCallbackPage"));
 const AdminDashboard = React.lazy(() => import("./pages/AdminDashboard"));
+const Settings = React.lazy(() => import("./pages/Settings"));
 const ProductionStats = React.lazy(() => import("./pages/institution/ProductionStats"));
 const EmploiStats = React.lazy(() => import("./pages/institution/EmploiStats"));
 const EconomieStats = React.lazy(() => import("./pages/institution/EconomieStats"));
 const TerritoireStats = React.lazy(() => import("./pages/institution/TerritoireStats"));
 const RapportsSectoriels = React.lazy(() => import("./pages/institution/RapportsSectoriels"));
+const NotFound = React.lazy(() => import("./pages/NotFound"));
 const Elearning = React.lazy(() => import("./pages/Elearning"));
 const CoursDetail = React.lazy(() => import("./pages/CoursDetail"));
 const MesCours = React.lazy(() => import("./pages/MesCours"));
@@ -106,18 +108,19 @@ export default function App() {
             <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
             <Route path="/locations" element={<Locations />} />
             <Route path="/markets" element={<Markets />} />
-            <Route path="/institutional" element={<ProtectedRoute><Institutional /></ProtectedRoute>} />
-            <Route path="/institution/production" element={<ProtectedRoute><ProductionStats /></ProtectedRoute>} />
-            <Route path="/institution/emploi" element={<ProtectedRoute><EmploiStats /></ProtectedRoute>} />
-            <Route path="/institution/economie" element={<ProtectedRoute><EconomieStats /></ProtectedRoute>} />
-            <Route path="/institution/territoire" element={<ProtectedRoute><TerritoireStats /></ProtectedRoute>} />
-            <Route path="/institution/rapports" element={<ProtectedRoute><RapportsSectoriels /></ProtectedRoute>} />
+            <Route path="/institutional" element={<ProtectedRoute allowedRoles={["INSTITUTION", "ADMIN"]}><Institutional /></ProtectedRoute>} />
+            <Route path="/institution/production" element={<ProtectedRoute allowedRoles={["INSTITUTION", "ADMIN"]}><ProductionStats /></ProtectedRoute>} />
+            <Route path="/institution/emploi" element={<ProtectedRoute allowedRoles={["INSTITUTION", "ADMIN"]}><EmploiStats /></ProtectedRoute>} />
+            <Route path="/institution/economie" element={<ProtectedRoute allowedRoles={["INSTITUTION", "ADMIN"]}><EconomieStats /></ProtectedRoute>} />
+            <Route path="/institution/territoire" element={<ProtectedRoute allowedRoles={["INSTITUTION", "ADMIN"]}><TerritoireStats /></ProtectedRoute>} />
+            <Route path="/institution/rapports" element={<ProtectedRoute allowedRoles={["INSTITUTION", "ADMIN"]}><RapportsSectoriels /></ProtectedRoute>} />
             <Route path="/compliance" element={<Compliance />} />
             <Route path="/payment/success" element={<PaymentSuccess />} />
             <Route path="/payment" element={<ProtectedRoute><Payment /></ProtectedRoute>} />
-            <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
+            <Route path="/admin" element={<ProtectedRoute allowedRoles={["ADMIN"]}><AdminDashboard /></ProtectedRoute>} />
             <Route path="/me" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-            <Route path="*" element={<Navigate to="/" replace />} />
+            <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+            <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>
       </main>

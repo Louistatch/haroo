@@ -25,7 +25,8 @@ from drf_spectacular.views import (
 )
 
 
-def root_view(request):
+def api_root_view(request):
+    """API info endpoint — moved to /api/ so / can serve the React SPA."""
     return JsonResponse({
         'name': 'Haroo API',
         'version': '1.0.0',
@@ -36,8 +37,11 @@ def root_view(request):
 
 
 urlpatterns = [
-    path('', root_view, name='root'),
+    # Root '/' is NOT mapped — SPA middleware serves React index.html for it
     path('admin/', admin.site.urls),
+    
+    # API root info
+    path('api/', api_root_view, name='haroo-api-root'),
     
     # API Documentation
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),

@@ -38,8 +38,9 @@ Thumbs.db
 .git/
 .gitignore
 
-# Frontend (built separately)
-frontend/
+# Frontend node_modules (source is needed for Docker multi-stage build)
+frontend/node_modules/
+frontend/dist/
 node_modules/
 
 # Env files (secrets injected via Railway env vars)

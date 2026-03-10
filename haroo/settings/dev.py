@@ -53,6 +53,9 @@ CACHES = {
     }
 }
 
+# Use database-backed sessions in dev (DummyCache doesn't persist sessions)
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+
 # Django Debug Toolbar (optional)
 try:
     import debug_toolbar

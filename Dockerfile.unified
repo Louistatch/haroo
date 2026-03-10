@@ -1,0 +1,51 @@
+# Haroo Unified Deployment: React + Django in one container
+# Stage 1: Build React frontend
+FROM node:20-alpine AS frontend-builder
+WORKDIR /frontend
+COPY frontend/package.json frontend/package-lock.json* ./
+RUN npm ci --production=false
+COPY frontend/ .
+# Build args for Vite env vars (passed at build time via --build-arg)
+ARG VITE_SUPABASE_URL=""
+ARG VITE_SUPABASE_ANON_KEY=""
+ARG VITE_FEDAPAY_PUBLIC_KEY=""
+ARG VITE_FEDAPAY_ENVIRONMENT="sandbox"
+RUN npm run build
+
+# Stage 2: Python backend + frontend static
+FROM python:3.11-slim
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PORT=8000 \
+    DJANGO_SETTINGS_MODULE=haroo.settings.railway_unified
+
+WORKDIR /app
+
+# System deps (minimal)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc libpq-dev && \
+    rm -rf /var/lib/apt/lists/*
+
+# Python deps (deploy-only)
+COPY requirements-deploy.txt requirements.txt
+RUN pip install --upgrade pip && pip install -r requirements.txt
+
+# Copy backend code
+COPY . .
+
+# Copy React build output into frontend_dist/
+COPY --from=frontend-builder /frontend/dist /app/frontend_dist
+
+# Create dirs
+RUN mkdir -p /app/staticfiles /app/media /app/logs
+
+# Collect Django static files + React assets
+RUN SECRET_KEY=build-placeholder \
+    DJANGO_SETTINGS_MODULE=haroo.settings.railway_unified \
+    python manage.py collectstatic --noinput 2>/dev/null || true
+
+EXPOSE ${PORT}
+
+CMD python manage.py migrate --noinput && \
+    gunicorn haroo.wsgi:application --bind 0.0.0.0:${PORT} --workers 2 --timeout 120

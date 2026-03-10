@@ -92,8 +92,8 @@ prod: ## Démarrer en mode production
 
 health: ## Vérifier la santé des services
 	@echo "Backend health:"
-	@curl -f http://localhost:8000/admin/ || echo "Backend DOWN"
+	@curl -sf http://localhost:8000/api/v1/health/ || echo "Backend DOWN"
 	@echo "\nFrontend health:"
-	@curl -f http://localhost:5000/ || echo "Frontend DOWN"
+	@curl -sf http://localhost:5000/ || echo "Frontend DOWN"
 	@echo "\nDocker services:"
 	@docker-compose ps

@@ -59,7 +59,7 @@ def admin_dashboard(request):
             'total': Mission.objects.count(),
             'en_cours': Mission.objects.filter(statut='EN_COURS').count(),
             'terminees': Mission.objects.filter(statut='TERMINEE').count(),
-            'en_attente': Mission.objects.filter(statut='EN_ATTENTE').count(),
+            'en_attente': Mission.objects.filter(statut='DEMANDE').count(),
         }
     except Exception:
         pass
@@ -70,7 +70,7 @@ def admin_dashboard(request):
         from apps.jobs.models import AnnonceCollective
         jobs_stats = {
             'total': AnnonceCollective.objects.count(),
-            'publiees': AnnonceCollective.objects.filter(statut='PUBLIEE').count(),
+            'publiees': AnnonceCollective.objects.filter(statut='VALIDEE').count(),
             'en_attente': AnnonceCollective.objects.filter(statut='EN_ATTENTE').count(),
         }
     except Exception:
@@ -82,7 +82,7 @@ def admin_dashboard(request):
         from apps.presales.models import PreventeAgricole
         presales_stats = {
             'total': PreventeAgricole.objects.count(),
-            'actives': PreventeAgricole.objects.filter(statut='ACTIVE').count(),
+            'actives': PreventeAgricole.objects.filter(statut='DISPONIBLE').count(),
         }
     except Exception:
         pass
@@ -92,7 +92,7 @@ def admin_dashboard(request):
     try:
         from apps.payments.models import Transaction
         total_tx = Transaction.objects.count()
-        tx_completed = Transaction.objects.filter(statut='COMPLETED')
+        tx_completed = Transaction.objects.filter(statut='SUCCESS')
         payments_stats = {
             'total_transactions': total_tx,
             'completed': tx_completed.count(),

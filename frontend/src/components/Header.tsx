@@ -78,7 +78,7 @@ function LogoIcon() {
 }
 
 const PRIMARY_NAV = [
-  { to: "/home",        label: "Tableau de bord", Icon: IconDashboard, roles: ['EXPLOITANT', 'AGRONOME', 'INSTITUTION', 'ADMIN'] },
+  { to: "/home",        label: "Tableau de bord", Icon: IconDashboard, roles: ['EXPLOITANT', 'AGRONOME', 'OUVRIER', 'ACHETEUR', 'INSTITUTION', 'ADMIN'] },
   { to: "/missions",    label: "Missions",         Icon: IconMissions,  roles: ['EXPLOITANT', 'AGRONOME', 'ADMIN'] },
   { to: "/documents",   label: "Documents",        Icon: IconDocuments, roles: ['EXPLOITANT', 'AGRONOME', 'INSTITUTION', 'ADMIN'] },
   { to: "/elearning",   label: "Formation",        Icon: IconDocuments, roles: ['EXPLOITANT', 'AGRONOME', 'OUVRIER', 'ACHETEUR', 'INSTITUTION', 'ADMIN'] },
@@ -94,6 +94,7 @@ const PRIMARY_NAV = [
 const USER_MENU = [
   { to: "/me",        label: "Mon profil",  Icon: IconProfile },
   { to: "/purchases", label: "Mes achats",  Icon: IconBag     },
+  { to: "/settings",  label: "Paramètres",  Icon: IconShield  },
   { to: "/security",  label: "Sécurité",   Icon: IconShield  },
 ];
 
