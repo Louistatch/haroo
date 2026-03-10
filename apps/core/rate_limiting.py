@@ -211,6 +211,7 @@ class AdvancedRateLimitMiddleware:
         '/static/',
         '/media/',
         '/api/v1/health/',
+        '/api/v1/ping/',
     ]
     
     def __init__(self, get_response):

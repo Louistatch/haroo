@@ -61,9 +61,14 @@ CACHES = {
 }
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 
-# --- Celery disabled: tasks run inline ---
+# Override Redis URL to prevent any connection attempts
+REDIS_URL = ''
+
+# --- Celery disabled: tasks run inline (no Redis broker) ---
 CELERY_TASK_ALWAYS_EAGER = True
 CELERY_TASK_EAGER_PROPAGATES = True
+CELERY_BROKER_URL = 'memory://'
+CELERY_RESULT_BACKEND = 'cache+memory://'
 
 # --- SSL / Security ---
 SECURE_SSL_REDIRECT = False  # Railway proxy handles TLS
