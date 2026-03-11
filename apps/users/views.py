@@ -196,6 +196,14 @@ def login_email(request):
         return Response({'error': 'Email ou mot de passe incorrect.'},
                         status=status.HTTP_401_UNAUTHORIZED)
 
+    # Account created via Google/OAuth — no password set
+    if not user.has_usable_password():
+        RateLimitService.record_attempt(client_ip, action='login', success=False)
+        return Response({
+            'error': 'Ce compte a été créé via Google. Utilisez la connexion Google ou réinitialisez votre mot de passe.',
+            'oauth_account': True,
+        }, status=status.HTTP_400_BAD_REQUEST)
+
     if not user.check_password(password):
         RateLimitService.record_attempt(client_ip, action='login', success=False)
         remaining = RateLimitService.check_rate_limit(client_ip, action='login')

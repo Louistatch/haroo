@@ -29,6 +29,12 @@ except Exception as e:
 echo "=== Running migrations ==="
 timeout 60 python manage.py migrate --noinput 2>&1 || echo "WARNING: migrations failed or timed out"
 
+# Set password for existing OAuth accounts (so email login works too)
+if [ -n "$ADMIN_EMAIL" ] && [ -n "$ADMIN_PASSWORD" ]; then
+    echo "=== Setting admin password ==="
+    python manage.py set_password "$ADMIN_EMAIL" "$ADMIN_PASSWORD" 2>&1 || echo "WARNING: set_password failed"
+fi
+
 echo "=== Starting gunicorn on 0.0.0.0:$PORT ==="
 exec gunicorn haroo.wsgi:application \
     --bind 0.0.0.0:${PORT} \

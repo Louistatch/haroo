@@ -121,7 +121,12 @@ export default function Register() {
       const dest = data?.user?.user_type ? "/home" : "/choose-profile";
       navigate(dest);
     } catch (err: any) {
-      if (err?.code !== "auth/popup-closed-by-user") {
+      if (err?.code === "auth/popup-closed-by-user") return;
+      if (err?.code === "auth/unauthorized-domain") {
+        setError("Domaine non autorisé dans Firebase. Contactez l'administrateur.");
+      } else if (err?.response?.data?.detail) {
+        setError(err.response.data.detail);
+      } else {
         setError("Connexion Google échouée. Réessayez.");
       }
     } finally {
