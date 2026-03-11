@@ -621,6 +621,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
             'user_type',
             'first_name',
             'last_name',
+            'is_staff',
             'two_factor_enabled',
             'photo_profil',
             'exploitant_profile',
@@ -634,6 +635,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
         read_only_fields = [
             'id',
             'phone_verified',
+            'is_staff',
             'two_factor_enabled',
             'created_at',
             'updated_at'

@@ -668,9 +668,24 @@ def manage_profile(request):
     """
     if request.method == 'GET':
         from .permissions import get_verification_status
-        serializer = UserProfileSerializer(request.user)
-        data = serializer.data
-        data['verification'] = get_verification_status(request.user)
+        try:
+            serializer = UserProfileSerializer(request.user)
+            data = serializer.data
+        except Exception:
+            # Fallback to basic user data if profile serialization fails
+            data = {
+                'id': request.user.id,
+                'username': request.user.username,
+                'email': request.user.email,
+                'user_type': request.user.user_type,
+                'first_name': request.user.first_name,
+                'last_name': request.user.last_name,
+                'is_staff': request.user.is_staff,
+            }
+        try:
+            data['verification'] = get_verification_status(request.user)
+        except Exception:
+            data['verification'] = {'is_verified': False, 'status': 'UNKNOWN', 'can_use_platform': True}
         return Response(data)
     
     elif request.method == 'PATCH':

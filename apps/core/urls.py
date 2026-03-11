@@ -5,6 +5,7 @@ from . import views_admin
 
 urlpatterns = [
     path('ping/', views.ping, name='ping'),  # Lightweight healthcheck (no DB)
+    path('auth-debug/', views.auth_debug, name='auth-debug'),  # Debug auth token
     path('health/', views.health_check, name='health-check'),
     path('health/detailed/', views.health_check_detailed, name='health-check-detailed'),
     # AI Assistant

@@ -212,6 +212,8 @@ class AdvancedRateLimitMiddleware:
         '/media/',
         '/api/v1/health/',
         '/api/v1/ping/',
+        '/api/v1/auth-debug/',
+        '/api/v1/auth/',
     ]
     
     def __init__(self, get_response):

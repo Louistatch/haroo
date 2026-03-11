@@ -94,6 +94,33 @@ def ping(request):
     return Response({'status': 'ok'})
 
 
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def auth_debug(request):
+    """Debug endpoint to test auth header parsing (no secrets exposed)."""
+    auth_header = request.META.get('HTTP_AUTHORIZATION', '')
+    has_token = bool(auth_header and auth_header.startswith('Bearer '))
+    result = {'has_auth_header': has_token}
+    if has_token:
+        token = auth_header.split(' ', 1)[1]
+        result['token_length'] = len(token)
+        result['token_prefix'] = token[:20] + '...'
+        try:
+            from apps.users.services import JWTAuthService
+            payload = JWTAuthService.verify_token(token, token_type='access')
+            if payload:
+                result['token_valid'] = True
+                result['user_id'] = payload.get('user_id')
+                result['user_type'] = payload.get('user_type')
+            else:
+                result['token_valid'] = False
+                result['reason'] = 'verify_token returned None'
+        except Exception as e:
+            result['token_valid'] = False
+            result['reason'] = str(e)
+    return Response(result)
+
+
 @extend_schema(
     summary="Health Check détaillé (admin)",
     description="Retourne des métriques détaillées sur l'état du système. Réservé aux administrateurs.",

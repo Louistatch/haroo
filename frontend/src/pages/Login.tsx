@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { auth, googleProvider } from "../lib/firebase";
@@ -72,6 +72,13 @@ export default function Login() {
   const [loadingGoogle, setLoadingGoogle] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (localStorage.getItem("access_token")) {
+      navigate("/home", { replace: true });
+    }
+  }, [navigate]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();

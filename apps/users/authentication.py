@@ -66,7 +66,9 @@ class JWTAuthentication(BaseAuthentication):
             return (user, token)
             
         except Exception as e:
-            raise AuthenticationFailed(str(e))
+            if 'invalide' in str(e).lower() or 'expiré' in str(e).lower():
+                raise AuthenticationFailed(str(e))
+            raise AuthenticationFailed('Token invalide ou expiré')
     
     def authenticate_header(self, request):
         """
