@@ -27,7 +27,7 @@ except Exception as e:
 
 # Run migrations (don't block startup if DB is slow/unavailable)
 echo "=== Running migrations ==="
-timeout 20 python manage.py migrate --noinput 2>&1 || echo "WARNING: migrations failed or timed out"
+timeout 60 python manage.py migrate --noinput 2>&1 || echo "WARNING: migrations failed or timed out"
 
 echo "=== Starting gunicorn on 0.0.0.0:$PORT ==="
 exec gunicorn haroo.wsgi:application \
