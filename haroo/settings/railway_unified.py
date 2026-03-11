@@ -112,6 +112,14 @@ FEDAPAY_ENVIRONMENT = env('FEDAPAY_ENVIRONMENT', default='sandbox')
 # --- Email ---
 EMAIL_BACKEND = env('EMAIL_BACKEND', default='django.core.mail.backends.console.EmailBackend')
 
+# --- DRF: JWT only (no SessionAuth CSRF issues in production) ---
+REST_FRAMEWORK = {
+    **REST_FRAMEWORK,
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'apps.users.authentication.JWTAuthentication',
+    ],
+}
+
 # --- Sentry ---
 SENTRY_DSN = env('SENTRY_DSN', default='')
 if SENTRY_DSN and SENTRY_DSN.startswith('https://'):
