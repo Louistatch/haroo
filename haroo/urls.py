@@ -63,6 +63,7 @@ urlpatterns = [
     path('api/v1/', include('apps.presales.urls')),
     path('api/v1/', include('apps.jobs.urls')),
     path('api/v1/elearning/', include('apps.elearning.urls')),
+    path('api/cards/', include('apps.cards.urls')),
 ]
 
 # Ajouter les URLs de debug toolbar uniquement en mode DEBUG
