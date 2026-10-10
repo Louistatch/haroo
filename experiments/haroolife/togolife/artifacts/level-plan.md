@@ -1,0 +1,2 @@
+# Quartier
+Rue principale nord-sud et routes transversales; spawn trottoir ouest; marché au nord; atelier au nord du marché; comptoir au sud; logement dans une cour à l'est et taxi à l'est. Trajets du premier commerce sur trottoir ouest; livraison courte à l'atelier. Le passage de chaussée ajoute du trafic, sans jeu de conduite annoncé. Le joueur voit son avatar, le trajet immédiat et un anneau de destination. Cour avec porte réelle et murs séparés. Pas de deuxième scène recolorée présentée comme une autre région.

@@ -1,0 +1,14 @@
+{
+  "name": "togo-life",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test --test-isolation=none tests/*.test.mjs",
+    "serve": "python3 -m http.server 8000",
+    "build": "node scripts/build.mjs"
+  },
+  "engines": {
+    "node": ">=22.7"
+  }
+}

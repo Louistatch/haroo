@@ -1,0 +1,22 @@
+✔ original glTF parses with 22 bones and Idle Walk Run clips; mixer animates actual skeleton (36.847685ms)
+✔ swept substeps prevent wall tunneling at run speed (0.259456ms)
+✔ wall contact permits sliding (0.081461ms)
+✔ turn takes shortest arc across pi (0.085737ms)
+✔ camera proxy shortens camera segment at wall without raycasting render geometry (0.245034ms)
+✔ trade requires money, carrying capacity and physical endpoints (0.442778ms)
+✔ high prices reduce sales and cannot create money without stock (0.147038ms)
+✔ contracts require collection then separate destination, dialogue cannot farm reputation (0.101481ms)
+✔ time creates rent debt, needs decay and expired deliveries are removed (0.121921ms)
+✔ strict saves roundtrip, reject malicious values atomically and migrate legacy conservatively (0.69966ms)
+✔ appearance and position survive a save, invalid appearance and coordinates reject atomically (0.127489ms)
+✔ delivery is available only once per game day (0.082252ms)
+✔ world uses instancing and has finite geometry, walkable home door, accessible economy endpoints (20.468518ms)
+✔ NPC schedule changes actual destinations and continues walking without network AI (52.212323ms)
+ℹ tests 14
+ℹ suites 0
+ℹ pass 14
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 138.786144

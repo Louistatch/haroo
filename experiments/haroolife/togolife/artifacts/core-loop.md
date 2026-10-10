@@ -1,0 +1,2 @@
+# Contrat
+Le joueur transporte des produits pour financer sa vie, pendant que le coût du stock, la faim et le loyer créent une pression. Les ventes retirent réellement le stock et ajoutent le prix payé. Un prix trop haut immobilise l'investissement ; le dépôt exige le comptoir. Contrôles alimentent le mouvement et interactions de proximité ; tests vérifient les endpoints, prix, inventaire et monnaie. La validation de cette boucle par vrais inputs est préparée dans tests/browser.py mais reste bloquée par Chromium.
