@@ -94,3 +94,7 @@ _test_ai_frontend.html
 # Python cache
 __pycache__/
 *.pyc
+
+# Fichiers d'environnement réels (jamais dans le dépôt public)
+.env.railway
+.env.local-prod
