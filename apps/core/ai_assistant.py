@@ -3,11 +3,21 @@ Service d'assistant IA utilisant Google Gemini
 """
 from google import genai
 from google.genai import types
+import os
+
 from django.conf import settings
 
-# Configuration de l'API Gemini
-GEMINI_API_KEY = "AIzaSyBNvx_RxEzp4L5DxOKHgi2nhUfX46ogqrs"
-client = genai.Client(api_key=GEMINI_API_KEY)
+# Configuration de l'API Gemini : la clé vient de l'environnement (Railway), jamais du code.
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
+_client = None
+
+
+def _gemini():
+    """Client créé au premier message : sans clé, l'assistant répond par son message d'erreur."""
+    global _client
+    if _client is None:
+        _client = genai.Client(api_key=GEMINI_API_KEY)
+    return _client
 
 # Contexte système pour l'assistant Haroo
 SYSTEM_CONTEXT = """Tu es Haroo AI, l'assistant virtuel de la plateforme agricole Haroo au Togo.
@@ -157,7 +167,7 @@ class HarooAIAssistant:
             })
             
             # Générer la réponse
-            response = client.models.generate_content(
+            response = _gemini().models.generate_content(
                 model='gemini-2.5-flash',
                 contents=chat['history'],
                 config=types.GenerateContentConfig(
